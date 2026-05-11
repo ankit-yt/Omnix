@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"cd frontend && pnpm dev\" \"cd backend && pnpm tsx watch index.ts\"",
+    "dev": "concurrently \"cd frontend && pnpm dev\" \"cd ./backend/src && pnpm dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
