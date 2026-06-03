@@ -1,10 +1,13 @@
+
+import dotenv from 'dotenv'
+dotenv.config();
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import dotenv from 'dotenv'
 import AppError from '@/utils/AppError';
 import errorHandler from '@/middleware/errorHandler';
-dotenv.config();
+import { connectDatabase } from '@/config/database';
+
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -35,7 +38,4 @@ app.use((req, res, next) => {
 
 app.use(errorHandler)
 
-app.listen(PORT , ()=>{
-  console.log(`server started on http://localhost:${PORT}`)
-  console.log(`Health check : http://localhost:${PORT}/health`)
-})
+connectDatabase()

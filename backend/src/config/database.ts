@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
-
+import dotenv from 'dotenv'
+dotenv.config()
 const MONGODB_URI = process.env.MONGODB_URI || ''
 
 if(!MONGODB_URI){
@@ -15,7 +16,12 @@ export const connectDatabase = async ():Promise<void>=>{
   }
 
   try{
-    await 
+    await mongoose.connect(MONGODB_URI)
+    isConnected = true
+    console.log("Mongoose connected successfully")
+  }catch(err){
+    console.log("MongoDb connection failed :",err)
+    process.exit(1)
   }
 
 }
