@@ -61,7 +61,7 @@ const errorHandler: ErrorRequestHandler = (err:any , req:Request , res:Response 
   if(process.env.NODE_ENV == 'development'){
     sendDevError(err , res)
   }else{
-    let error = {...err , message: err.message}
+    let error = err
      if (err.code === 11000) error = handleDuplicateKeyError(error)
     if (err.name === 'ValidationError') error = handleValidationError(error)
     if (err.name === 'CastError') error = handleCastError(error)

@@ -1,4 +1,4 @@
-import { softDeletePlugin } from "@/models/base/softDelete";
+import { auditPlugin, softDeletePlugin } from "@/models/base/plugins";
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IKnowledgeBase extends Document {
@@ -12,6 +12,7 @@ export interface IKnowledgeBase extends Document {
   processingError:string | undefined
   uploadedBy:mongoose.Types.ObjectId
   createdBy:mongoose.Types.ObjectId
+  updatedBy:mongoose.Types.ObjectId
   isDeleted:boolean
   deletedAt:Date
   createdAt:Date
@@ -40,10 +41,6 @@ const KnowledgeBaseSchema = new Schema<IKnowledgeBase>({
     ref:'User',
     required:true
   },
-  createdBy:{
-    type:Schema.Types.ObjectId,
-    ref:'User'
-  }
 },{
   timestamps:true,
   toJSON:{
@@ -56,6 +53,7 @@ const KnowledgeBaseSchema = new Schema<IKnowledgeBase>({
 
 
 KnowledgeBaseSchema.plugin(softDeletePlugin)
+KnowledgeBaseSchema.plugin(auditPlugin)
 KnowledgeBaseSchema.index({ organization: 1, status: 1 })
 
 export default mongoose.model<IKnowledgeBase>('KnowledgeBase', KnowledgeBaseSchema)

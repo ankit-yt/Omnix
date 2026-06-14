@@ -1,0 +1,61 @@
+import mongoose, { Schema } from "mongoose";
+
+export interface IPaymentOrder{
+  organizationId : mongoose.Types.ObjectId;
+  subscriptionId? : mongoose.Types.ObjectId;
+  amount:number;
+  currency:string;
+  status:'pending'|'success'|'failed';
+  paymentMethod:string;
+  razorpayOrderId:string;
+  razorpayPaymentId?:string;
+  errorMessage?:string;
+  createdAt:Date;
+  updatedAt:Date;
+}
+
+const PaymentOrderSchema = new Schema<IPaymentOrder>({
+  organizationId:{
+    type:Schema.Types.ObjectId,
+    ref:'Organization',
+    required:true
+  },
+  subscriptionId:{
+    type:Schema.Types.ObjectId,
+    ref:'Subscription'
+  },
+  amount:{
+    type:Number,
+    required:true
+  },
+  currency:{
+    type:String,
+    default:'INR'
+  },
+  status:{
+    type:String,
+    enum:['pending','success','failed'],
+    default:'pending'
+  },
+  paymentMethod:{
+    type:String,
+    default:'unknown'
+  },
+  razorpayOrderId:{
+    type:String,
+    required:true,
+    unique:true
+  },
+  razorpayPaymentId:{type:String},
+  errorMessage:{type:String}
+},{
+  timestamps:true,
+  toJSON:{
+    transform(doc,ret){
+      const {__v , ...safeJson} = ret;
+      return safeJson;
+    }
+  }
+})
+
+export default mongoose.model<IPaymentOrder>('PaymentOrder',PaymentOrderSchema);

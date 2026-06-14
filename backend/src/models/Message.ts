@@ -1,4 +1,4 @@
-import { softDeletePlugin } from '@/models/base/softDelete'
+import { softDeletePlugin } from '@/models/base/plugins'
 import mongoose, { Document, Schema } from 'mongoose'
 
 export interface IMessage extends Document {
@@ -26,10 +26,6 @@ export interface IMessage extends Document {
     // low score = AI was guessing, high = found good docs
     retrievalScore: number
   }
-  // soft delete on messages too
-  // never hard delete conversation history
-  isDeleted: boolean
-  deletedAt: Date
   createdAt: Date
 }
 
@@ -53,7 +49,6 @@ const MessageSchema = new Schema<IMessage>(
     content: {
       type: String,
       required: true,
-      // content itself should never be empty
       minlength: [1, 'Message content cannot be empty'],
     },
     metadata: {
@@ -101,7 +96,6 @@ const MessageSchema = new Schema<IMessage>(
   }
 )
 
-MessageSchema.plugin(softDeletePlugin)
 
 MessageSchema.index({ session: 1, createdAt: 1 })
 

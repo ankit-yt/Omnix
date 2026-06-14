@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 import crypto from 'crypto'
-import { softDeletePlugin } from "@/models/base/softDelete";
+import { softDeletePlugin } from "@/models/base/plugins";
 export interface IOrganization extends Document {
   name:string
   domain:string
@@ -8,20 +8,23 @@ export interface IOrganization extends Document {
   apiPrefix:string
   plan:'free' | 'pro' | 'enterprise'
   isActive:boolean
-  setting:{
+  settings:{
     botName:string
     PrimaryColor:string
     WelcomeMessage:string
   }
   usage:{
-    messageThisMonth:number
+    messagesThisMonth:number
     totalMessage:number
     lastResetDate:Date
   }
   subscription:{
-    status:'trial' | 'active' | 'cancelled' | 'past_due'
+    activeSubscriptionId : mongoose.Types.ObjectId,
+    status:'trial' | 'active' | 'cancelled' | 'past_due' | 'expired'
     trialEndsAt:Date
     currentPeriodEnd:Date
+    razorpayCustomerId:String,
+    razorpaySubscriptionId:String,
   }
   createdBy:mongoose.Types.ObjectId
   createdAt: Date
@@ -63,7 +66,7 @@ const OrganizationSchema = new Schema<IOrganization>({
     type:Boolean,
     default:true,
   },
-  setting:{
+  settings:{
     botName:{
       type:String,
       default:'Erp Assistant'
@@ -74,15 +77,19 @@ const OrganizationSchema = new Schema<IOrganization>({
     },
     WelcomeMessage:{
       type:String,
-      Default:'Hi! How i can help you today?'
+      default:'Hi! How i can help you today?'
     }
   },
   usage:{
-    messageThisMonth:{type:Number,default:0},
+    messagesThisMonth:{type:Number,default:0},
     totalMessage:{type:Number,default:0},
     lastResetDate:{type:Date, default:Date.now}
   },
   subscription:{
+    activeSubscriptionId:{
+      type:Schema.Types.ObjectId,
+      ref:'Subscription'
+    },
     status:{
       type:String,
       enum:['trial','active','cancelled','past_due'],
@@ -94,7 +101,9 @@ const OrganizationSchema = new Schema<IOrganization>({
     },
     currentPeriodEnd:{
       type:Date
-    }
+    },
+    razorpayCustomerId:String,
+    razorpaySubscriptionId:String,
   },
   createdBy:{
     type:Schema.Types.ObjectId,
@@ -116,6 +125,7 @@ OrganizationSchema.methods.generateNewApiKey = async function(){
   const key = `erpg_${crypto.randomBytes(32).toString('hex')}`
   this.apiKey = key
   this.apiPrefix = key.substring(0,12)+'...'
+  return key
 }
 
 OrganizationSchema.plugin(softDeletePlugin)

@@ -19,3 +19,16 @@ export const softDeletePlugin = (schema:Schema)=>{
     await this.save()
   }
 }
+
+export const auditPlugin = (schema:Schema)=>{
+  schema.add({
+    createdBy:{
+      type:Schema.Types.ObjectId,
+      ref:'User'
+    },
+    updatedBy:{
+      type:Schema.Types.ObjectId,
+      ref:'User'
+    }
+  })
+}

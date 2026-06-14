@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from 'bcryptjs'
-import { softDeletePlugin } from "@/models/base/softDelete";
+import { softDeletePlugin } from "@/models/base/plugins";
 import Organization from "@/models/Organization";
 export interface IUser extends Document{
   name:string,
@@ -24,7 +24,7 @@ export interface IUser extends Document{
   createdAt:Date
   updatedAt:Date
   
-  comparePassword(candidatePassword:string) : Promise<string>
+  comparePassword(candidatePassword:string) : Promise<boolean>
   isLocked(): boolean
   incrementLoginAttempts(): Promise<void>
 
@@ -92,7 +92,7 @@ const UserSchema = new Schema<IUser>({
 
 UserSchema.pre('save', async function(next){
   if(!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password , 12)
+  this.password = await bcrypt.hash(this.password , 12);
 })
 
 UserSchema.methods.comparePassword = async function(candidatePassword:string):Promise<boolean>{
@@ -115,6 +115,6 @@ UserSchema.methods.incrementLoginAttempts = async function(){
 }
 
 UserSchema.plugin(softDeletePlugin)
-UserSchema.index({email:1 , Organization:1})
+UserSchema.index({email:1 , organization:1})
 
 export default mongoose.model<IUser>('User' , UserSchema)

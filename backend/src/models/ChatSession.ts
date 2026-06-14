@@ -1,4 +1,4 @@
-import { softDeletePlugin } from "@/models/base/softDelete";
+import { softDeletePlugin } from "@/models/base/plugins";
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IChatSession extends Document{
