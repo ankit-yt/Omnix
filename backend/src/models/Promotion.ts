@@ -6,11 +6,13 @@ export interface IPromotion extends Document{
   discountPercentage:number;
   applicablePlans:mongoose.Types.ObjectId[];
   validFrom:Date;
-  ValidUntil:Date;
+  validUntil:Date;
   createdAt:Date;
   updatedAt:Date;
   createdBy:mongoose.Types.ObjectId;
   updatedBy:mongoose.Types.ObjectId;
+  isDeleted:boolean;
+  deletedAt:Date;
 }
 
 const PromotionSchema = new Schema<IPromotion>({
@@ -34,7 +36,7 @@ const PromotionSchema = new Schema<IPromotion>({
     type:Date,
     required:true
   },
-  ValidUntil:{
+  validUntil:{
     type:Date,
     required:true
   },

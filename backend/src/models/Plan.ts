@@ -17,8 +17,10 @@ export interface IPlan extends Document{
   features:string[];
   createdAt:Date;
   updatedAt:Date;
-  createdBy:mongoose.Types.ObjectId
-  updatedBy:mongoose.Types.ObjectId
+  createdBy:mongoose.Types.ObjectId;
+  updatedBy:mongoose.Types.ObjectId;
+  isDeleted:boolean;
+  deletedAt:Date;
   
 }
 
@@ -34,6 +36,11 @@ const PlanSchema = new Schema<IPlan>({
     type:String,
     required:true,
     trim:true,
+  },
+  description:{
+    type:String,
+    default:"",
+    trim:true
   },
   priceInPaise:{
     type:Number,

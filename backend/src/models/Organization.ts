@@ -18,6 +18,11 @@ export interface IOrganization extends Document {
     totalMessage:number
     lastResetDate:Date
   }
+  cachedLimits:{
+    messagesPerMonth:number;
+    knowledgeBaseSizeMB:number;
+    teamMembers:number
+  }
   subscription:{
     activeSubscriptionId : mongoose.Types.ObjectId,
     status:'trial' | 'active' | 'cancelled' | 'past_due' | 'expired'
@@ -84,6 +89,11 @@ const OrganizationSchema = new Schema<IOrganization>({
     messagesThisMonth:{type:Number,default:0},
     totalMessage:{type:Number,default:0},
     lastResetDate:{type:Date, default:Date.now}
+  },
+  cachedLimits:{
+    messagesPerMonth:{type:Number,default:100},
+    knowledgeBaseSizeMB: { type: Number, default: 10 },
+    teamMembers: { type: Number, default: 1 },
   },
   subscription:{
     activeSubscriptionId:{
