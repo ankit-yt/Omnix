@@ -4,9 +4,9 @@ dotenv.config();
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import AppError from '@/utils/AppError';
-import errorHandler from '@/middleware/errorHandler';
-import { connectDatabase } from '@/config/database';
+import AppError from '@/utils/AppError.js';
+import errorHandler from '@/middleware/errorHandler.js';
+import { connectDatabase } from '@/config/database.js';
 
 
 const app = express()
@@ -32,10 +32,14 @@ app.get("/health" , (req, res)=>{
 
 
 app.use((req, res, next) => {
-  console.log("Invalid route hit")
+ console.log(req.method, req.originalUrl);
   next(new AppError(`Route ${req.originalUrl} not found`, 404))
 })
 
 app.use(errorHandler)
 
 connectDatabase()
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})

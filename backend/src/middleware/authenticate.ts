@@ -1,7 +1,8 @@
-import { Organization, User } from '@/models/base'
-import AppError from '@/utils/AppError'
-import asyncHandler from '@/utils/asyncHandler'
-import { verifyAccessToken } from '@/utils/generateToken'
+
+import { Organization, User } from '@/models/base/index.js'
+import AppError from '@/utils/AppError.js'
+import asyncHandler from '@/utils/asyncHandler.js'
+import { verifyAccessToken } from '@/utils/generateToken.js'
 import { NextFunction , Request , Response } from 'express'
 
 export const authenticate = asyncHandler(
