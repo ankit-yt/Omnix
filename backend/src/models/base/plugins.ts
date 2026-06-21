@@ -20,6 +20,8 @@ export const softDeletePlugin = (schema:Schema)=>{
   }
 }
 
+
+
 export const auditPlugin = (schema:Schema)=>{
   schema.add({
     createdBy:{
