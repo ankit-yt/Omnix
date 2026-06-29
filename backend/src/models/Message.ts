@@ -1,35 +1,38 @@
-import { softDeletePlugin } from '@/models/base/plugins'
+
 import mongoose, { Document, Schema } from 'mongoose'
 
-export interface IMessage extends Document {
-  session: mongoose.Types.ObjectId
-  organization: mongoose.Types.ObjectId
-  role: 'user' | 'assistant'
-  content: string
+export interface IMessage {
+  session: mongoose.Types.ObjectId;
+  organization: mongoose.Types.ObjectId;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
   metadata: {
     // what page was employee on when this message was sent
-    pageUrl: string
+    pageUrl: string;
     // what vision AI saw when it analyzed the screenshot
-    screenshotAnalysis: string
+    screenshotAnalysis: string;
     // which chunk IDs were used to answer this question
     // so we know which docs are actually being used
-    sourceChunks: mongoose.Types.ObjectId[]
+    sourceChunks: mongoose.Types.ObjectId[];
     // how many tokens this message consumed
     // user messages = 0, assistant messages = actual count
-    tokensUsed: number
+    tokensUsed: number;
     // how long did AI take to respond in milliseconds
-    responseTime: number
+    responseTime: number;
     // which AI model was used
     // future proofing — maybe we switch models per plan
-    modelUsed: string
+    modelUsed: string;
     // confidence score — how relevant were the found chunks
     // low score = AI was guessing, high = found good docs
-    retrievalScore: number
+    retrievalScore: number;
   }
-  createdAt: Date
+  createdAt: Date;
+  updatedAt:Date;
 }
 
-const MessageSchema = new Schema<IMessage>(
+export interface IMessageDoc extends IMessage , Document {};
+
+const MessageSchema = new Schema<IMessageDoc>(
   {
     session: {
       type: Schema.Types.ObjectId,
@@ -43,7 +46,7 @@ const MessageSchema = new Schema<IMessage>(
     },
     role: {
       type: String,
-      enum: ['user', 'assistant'],
+      enum: ['user', 'assistant' , 'system'],
       required: true,
     },
     content: {
@@ -96,11 +99,10 @@ const MessageSchema = new Schema<IMessage>(
   }
 )
 
-
 MessageSchema.index({ session: 1, createdAt: 1 })
 
 MessageSchema.index({ organization: 1, createdAt: -1 })
 
-MessageSchema.index({ organization: 1, 'metadata.tokensUsed': 1 })
+MessageSchema.index({ organization: 1,createdAt:1, 'metadata.tokensUsed': 1 })
 
-export default mongoose.model<IMessage>('Message', MessageSchema)
+export default mongoose.model<IMessageDoc>('Message', MessageSchema)

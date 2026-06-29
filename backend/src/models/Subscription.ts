@@ -1,86 +1,118 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-
-interface ISubscriptionHistory{
+export interface ISubscriptionHistory {
   event:
-  |'trail_started'
-  |'activated'
-  |'renewed'
-  |'upgraded'
-  |'cancelled'
-  |'expired'
-  |'reactivated'
-  |'past_due',
-  fromPlan:string;
-  toPlan:string;
-  fromStatus:string;
-  toStatus:string;
-  paymentOrder:mongoose.Types.ObjectId;
-  occurredAt:Date;
-  note:string
+    | 'activated'
+    | 'renewed'
+    | 'upgraded'
+    | 'cancelled'
+    | 'past_due'
+    | 'expired';
+  fromPlan?: string;
+  toPlan: string;
+  fromStatus?: string;
+  toStatus: string;
+  paymentOrder?: mongoose.Types.ObjectId;
+  occurredAt?: Date;
+  note?: string;
 }
 
-export interface ISubscription extends Document{
-  organizationId : mongoose.Types.ObjectId;
-  plan:'pro'|'enterprise';
-  status:'active'|'past_due'|'cancelled'|'expired';
-  currentPeriodStarts:Date;
-  currentPeriodEnds:Date;
-  trailStart:Date,
-  trailEnd:Date,
-  razorPaySubscriptionId:string;
-  lockedLimit:{
-    messagePerMonth:number;
-    knowledgeBaseSizeMB:number;
-    teamMembers:number;
+export interface ISubscription {
+  _id?: mongoose.Types.ObjectId;
+  organization: mongoose.Types.ObjectId;
+  plan: string; 
+  status: 'active' | 'past_due' | 'cancelled' | 'expired';
+  currentPeriodStarts?: Date; 
+  currentPeriodEnds?: Date; 
+  razorPaySubscriptionId: string;
+  lockedLimits: {
+    messagesPerMonth: number;
+    knowledgeBaseSizeMB: number;
+    teamMembers: number;
   };
-  history:ISubscriptionHistory[];
-  payments:mongoose.Types.ObjectId[];
-  lastPayment:mongoose.Types.ObjectId;
-  cancelledAt:Date;
-  cancellationReason:string;
-  cancelAtPeriodEnd:boolean;
-  createdAt:Date;
-  updateAt:Date;
+  history: ISubscriptionHistory[];
+  payments: mongoose.Types.ObjectId[];
+  lastPayment?: mongoose.Types.ObjectId;
+  cancelledAt?: Date;
+  cancellationReason: string;
+  cancelAtPeriodEnd: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const PLAN_LIMITS = {
-  
-}
+export interface ISubscriptionDoc extends Omit<ISubscription, '_id'>, Document {}
 
-const subscriptionSchema = new Schema<ISubscription>({
-  organizationId:{
-    type:Schema.Types.ObjectId,
-    ref:'Organization',
-    required:true
+const subscriptionSchema = new Schema<ISubscriptionDoc>({
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
   },
-  plan:{
-    type:String,
-    enum:['pro','enterprise'],
-    required:true
+  plan: {
+    type: String, 
+    required: true,
+    default: 'free'
   },
-  status:{
-    type:String,
-    enum:['active','past_due','cancelled','expired'],
-    default:'active'
+  status: {
+    type: String,
+    enum: ['active', 'past_due', 'cancelled', 'expired'],
+    default: 'active'
   },
-  currentPeriodStarts:{
-    type:Date,
-    required:true
+  currentPeriodStarts: {
+    type: Date,
   },
-  currentPeriodEnds:{
-    type:Date,
-    required:true
+  currentPeriodEnds: {
+    type: Date,
+  },
+  razorPaySubscriptionId: {
+    type: String,
+    default: ''
+  },
+  lockedLimits: {
+    messagesPerMonth: { type: Number, required: true },
+    knowledgeBaseSizeMB: { type: Number, required: true },
+    teamMembers: { type: Number, required: true }
+  },
+  history: [{
+    event: { type: String, required: true },
+    fromPlan: { type: String, default: '' },
+    toPlan: { type: String, default: '' },
+    fromStatus: { type: String, default: '' },
+    toStatus: { type: String, default: '' },
+    paymentOrder: { type: Schema.Types.ObjectId, ref: 'PaymentOrder' },
+    occurredAt: { type: Date, default: Date.now },
+    note: { type: String, default: '' }
+  }],
+  payments: [{
+    type: Schema.Types.ObjectId,
+    ref: 'PaymentOrder'
+  }],
+  lastPayment: {
+    type: Schema.Types.ObjectId,
+    ref: 'PaymentOrder'
+  },
+  cancelledAt: {
+    type: Date,
+  },
+  cancellationReason: {
+    type: String,
+    default: ''
+  },
+  cancelAtPeriodEnd: {
+    type: Boolean,
+    default: false
   }
-},{
-  timestamps:true,
-   toJSON:{
-    transform(doc,ret){
-      const {__v , ...safeJson} = ret;
+}, {
+  timestamps: true,
+  toJSON: {
+    transform(doc, ret) {
+      const { __v, ...safeJson } = ret;
       return safeJson;
     }
   }
 });
 
+subscriptionSchema.index({ organization: 1 });
+subscriptionSchema.index({ status: 1, currentPeriodEnds: 1 });
 
-export default mongoose.model<ISubscription>('Subscription',subscriptionSchema)
+export default mongoose.model<ISubscriptionDoc>('Subscription', subscriptionSchema);

@@ -1,8 +1,9 @@
 import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
-import { IAuditFields } from "@/models/base/types.js";
+import { IAudit } from "@/models/base/types.js";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IWorkspace extends Document  , IAuditFields{
+export interface IWorkspace extends  IAudit{
+  _id?:mongoose.Types.ObjectId;
   organization:mongoose.Types.ObjectId;
 
   name:string;
@@ -27,13 +28,13 @@ export interface IWorkspace extends Document  , IAuditFields{
   isActive:boolean;
 
 
-  isDeleted:boolean;
-
   createdAt:Date;
   updatedAt:Date
 }
 
-const WorkspaceSchema = new Schema<IWorkspace>({
+export interface IWorkspaceDoc extends Omit<IWorkspace,'_id'>  , Document {};
+
+const WorkspaceSchema = new Schema<IWorkspaceDoc>({
   organization:{
     type:Schema.Types.ObjectId,
     ref:'Organization',
@@ -109,4 +110,4 @@ WorkspaceSchema.index({ organization: 1,isDeleted: 1,})
 WorkspaceSchema.index({organization: 1,isActive: 1,})
 WorkspaceSchema.index({allowedDomains: 1,})
 
-export default mongoose.model<IWorkspace>('Workspace',WorkspaceSchema)
+export default mongoose.model<IWorkspaceDoc>('Workspace',WorkspaceSchema)

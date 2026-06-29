@@ -6,11 +6,11 @@ export const softDeletePlugin = (schema:Schema)=>{
     deletedAt:{type:Date , default:null}
   })
 
-  schema.pre(/^find/, function(this:any){
+  schema.pre(/^find/, function(this:any,next:(err?:any)=>void){
     if(!this.getQuery.includeDeleted){
       this.where({isDeleted:false})
     }
-    
+    next();
   })
 
   schema.methods.softDelete = async function(){

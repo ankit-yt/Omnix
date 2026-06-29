@@ -1,5 +1,6 @@
 
-import { Organization, User } from '@/models/base/index.js'
+import organizationRepository from '@/repositories/organization.repository.js'
+import userRepository from '@/repositories/user.repository.js'
 import AppError from '@/utils/AppError.js'
 import asyncHandler from '@/utils/asyncHandler.js'
 import { verifyAccessToken } from '@/utils/generateToken.js'
@@ -7,13 +8,17 @@ import { NextFunction , Request , Response } from 'express'
 
 export const authenticate = asyncHandler(
   async(req:Request,res:Response,next:NextFunction)=>{
-    const authHeader = req.headers.authorization
+    const authHeader = req.headers.authorization;
+
     if(!authHeader || !authHeader.startsWith("Bearer ")){
       throw new AppError("Access token missing. Please log in.",401)
     }
-    const token = authHeader.split(' ')[1]
-    const decoded = verifyAccessToken(token)
-    const user = await User.findById(decoded.userId)
+
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyAccessToken(token);
+
+    const user = await userRepository.findById(decoded.userId)
+
     if(!user){
       throw new AppError("User no longer exists.",401)
     }
@@ -40,8 +45,11 @@ export const restrictTo = (...roles:string[])=>{
 export const authenticateWidget = asyncHandler(
   async(req:Request , res:Response , next:NextFunction)=>{
     const apiKey = req.header('x-api-key');
+
     if(!apiKey) throw new AppError('Api key is required.',401);
-    const org = await Organization.findOne({apiKey}).select('+apiKey').lean();
+
+    const org = await organizationRepository.findByApiKey(apiKey);
+
     if(!org) throw new AppError('Invalid API key',401);
     if(org.isDeleted) throw new AppError('Organization account no longer exists.',403);
     if(!org.isActive) throw new AppError('Organization account is inactive.',403);
@@ -51,7 +59,7 @@ export const authenticateWidget = asyncHandler(
       throw new AppError('System error: Billing limits not configured for this organization.', 500)
     }
 
-    if(org.usage.messagesThisMonth >= limits.messagesPerMonth){
+    if(org.cachedUsage.messagesThisMonth >= limits.messagesPerMonth){
       throw new AppError(`Monthly limit of ${limits.messagesPerMonth} messages reached. Please upgrade to continue.`, 429)
     }
 

@@ -1,8 +1,9 @@
 
 import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
+import { IAudit, ISoftDelete } from "@/models/base/types.js";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IKnowledgeDocument extends Document {
+export interface IKnowledgeDocument extends ISoftDelete, IAudit {
   organization:mongoose.Types.ObjectId;
   workspace:mongoose.Types.ObjectId;
 
@@ -21,18 +22,14 @@ export interface IKnowledgeDocument extends Document {
   processedAt:Date | null;
 
   uploadedBy:mongoose.Types.ObjectId;
-
-  createdBy:mongoose.Types.ObjectId;
-  updatedBy:mongoose.Types.ObjectId;
-
-  isDeleted:boolean;
-  deletedAt:Date
   
   createdAt:Date
   updatedAt:Date
 }
 
-const KnowledgeDocumentSchema = new Schema<IKnowledgeDocument>({
+export interface IKnowledgeDocumentDoc extends IKnowledgeDocument , Document {}
+
+const KnowledgeDocumentSchema = new Schema<IKnowledgeDocumentDoc>({
   organization:{
     type:Schema.Types.ObjectId,
     ref:'Organization',
@@ -84,4 +81,4 @@ KnowledgeDocumentSchema.index({ Workspace: 1, status: 1 })
 KnowledgeDocumentSchema.index({ Workspace: 1, isDeleted: 1 })
 KnowledgeDocumentSchema.index({ organization: 1, status: 1 })
 
-export default mongoose.model<IKnowledgeDocument>('KnowledgeDocument', KnowledgeDocumentSchema)
+export default mongoose.model<IKnowledgeDocumentDoc>('KnowledgeDocument', KnowledgeDocumentSchema)

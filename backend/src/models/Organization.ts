@@ -1,7 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 import crypto from 'crypto'
-import { softDeletePlugin } from "@/models/base/plugins.js";
-export interface IOrganization extends Document {
+import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
+import { IAudit, ISoftDelete } from "@/models/base/types.js";
+export interface IOrganization extends ISoftDelete , IAudit  {
+  _id?:mongoose.Types.ObjectId;
   name:string;
   slug:string;
   isSlugCustomized:boolean;
@@ -25,11 +27,10 @@ export interface IOrganization extends Document {
   }
   subscription:{
     activeSubscriptionId: mongoose.Types.ObjectId | null;
-    status:'trial' | 'active' | 'cancelled' | 'past_due' | 'expired';
-    trialEndsAt:Date;
-    currentPeriodEnd:Date | null;
-    razorpayCustomerId:string;
-    razorpaySubscriptionId:string;
+    status:'active' | 'cancelled' | 'past_due' | 'expired';
+    currentPeriodEnd?:Date | null;
+    razorpayCustomerId?:string;
+    razorpaySubscriptionId?:string;
   };
   onboardingStatus:{
     slugConfigured:boolean;
@@ -38,16 +39,15 @@ export interface IOrganization extends Document {
     firstSuccessfulMessage:boolean;
     completedAt:Date | null;
   }
-  createdBy:mongoose.Types.ObjectId | null
   createdAt: Date
-  isDeleted:boolean
-  deletedAt:Date
   updatedAt:Date
 
   generateNewApiKey():Promise<string>
 }
 
-const OrganizationSchema = new Schema<IOrganization>({
+export interface IOrganizationDoc extends Omit<IOrganization, '_id'> , Document {};
+
+const OrganizationSchema = new Schema<IOrganizationDoc>({
   name:{
     type:String,
     required:[true,'Organization name is required'],
@@ -118,12 +118,8 @@ const OrganizationSchema = new Schema<IOrganization>({
     },
     status:{
       type:String,
-      enum:['trial','active','cancelled','past_due','expired'],
-      default:'trial'
-    },
-    trialEndsAt:{
-      type:Date,
-      default:()=>new Date(Date.now()+14*24*60*60*1000),
+      enum:['active','cancelled','past_due','expired'],
+      default:'active'
     },
     currentPeriodEnd:{
       type:Date,
@@ -145,11 +141,6 @@ const OrganizationSchema = new Schema<IOrganization>({
     firstSuccessfulMessage:{type:Boolean , default:false},
     completedAt:{type:Date , default:null}
   },
-  createdBy:{
-    type:Schema.Types.ObjectId,
-    ref:"User",
-    default:null
-  },
 
 
 },{
@@ -170,6 +161,7 @@ OrganizationSchema.methods.generateNewApiKey = async function(){
 }
 
 OrganizationSchema.plugin(softDeletePlugin)
+OrganizationSchema.plugin(auditPlugin)
 OrganizationSchema.index({website:1})
 
-export default mongoose.model<IOrganization>('Organization',OrganizationSchema)
+export default mongoose.model<IOrganizationDoc>('Organization',OrganizationSchema)

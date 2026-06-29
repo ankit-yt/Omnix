@@ -1,7 +1,7 @@
-import Organization from "@/models/Organization";
+
 import mongoose, { Document, Schema }  from "mongoose";
 
-export interface IChunk extends Document{
+export interface IChunk{
   knowledgeBase: mongoose.Types.ObjectId
   organization:mongoose.Types.ObjectId
   content:string
@@ -11,7 +11,9 @@ export interface IChunk extends Document{
   createdAt:Date
 }
 
-const ChunkSchema = new Schema<IChunk>({
+export interface IChunkDoc extends IChunk , Document {};
+
+const ChunkSchema = new Schema<IChunkDoc>({
     knowledgeBase:{
       type:Schema.Types.ObjectId,
       ref:"KnowledgeBase",
@@ -45,4 +47,4 @@ const ChunkSchema = new Schema<IChunk>({
 ChunkSchema.index({KnowledgeBase:1 , chunkIndex:1})
 ChunkSchema.index({Organization:1})
 
-export default mongoose.model<IChunk>("Chunk", ChunkSchema)
+export default mongoose.model<IChunkDoc>("Chunk", ChunkSchema)

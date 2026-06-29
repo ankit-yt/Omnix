@@ -1,7 +1,9 @@
-import { auditPlugin, softDeletePlugin } from "@/models/base/plugins";
+
+import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
+import { IAudit, ISoftDelete } from "@/models/base/types.js";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IPromotion extends Document{
+export interface IPromotion extends ISoftDelete , IAudit{
   name:string;
   discountPercentage:number;
   applicablePlans:mongoose.Types.ObjectId[];
@@ -9,13 +11,11 @@ export interface IPromotion extends Document{
   validUntil:Date;
   createdAt:Date;
   updatedAt:Date;
-  createdBy:mongoose.Types.ObjectId;
-  updatedBy:mongoose.Types.ObjectId;
-  isDeleted:boolean;
-  deletedAt:Date;
 }
 
-const PromotionSchema = new Schema<IPromotion>({
+export interface IPromotionDoc extends IPromotion , Document {};
+
+const PromotionSchema = new Schema<IPromotionDoc>({
   name:{
     type:String,
     required:true,
@@ -55,4 +55,4 @@ PromotionSchema.plugin(auditPlugin)
 PromotionSchema.index({ validFrom: 1, validUntil: 1 });
 PromotionSchema.index({ applicablePlans: 1 })
 
-export default mongoose.model<IPromotion>('Promotion',PromotionSchema)
+export default mongoose.model<IPromotionDoc>('Promotion',PromotionSchema)

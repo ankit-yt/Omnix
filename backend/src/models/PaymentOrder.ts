@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPaymentOrder{
   organizationId : mongoose.Types.ObjectId;
@@ -14,7 +14,9 @@ export interface IPaymentOrder{
   updatedAt:Date;
 }
 
-const PaymentOrderSchema = new Schema<IPaymentOrder>({
+export interface IPaymentOrderDoc extends IPaymentOrder , Document {};
+
+const PaymentOrderSchema = new Schema<IPaymentOrderDoc>({
   organizationId:{
     type:Schema.Types.ObjectId,
     ref:'Organization',
@@ -58,4 +60,4 @@ const PaymentOrderSchema = new Schema<IPaymentOrder>({
   }
 })
 
-export default mongoose.model<IPaymentOrder>('PaymentOrder',PaymentOrderSchema);
+export default mongoose.model<IPaymentOrderDoc>('PaymentOrder',PaymentOrderSchema);

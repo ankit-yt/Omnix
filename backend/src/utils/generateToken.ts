@@ -1,6 +1,6 @@
+import { IUser, IUserDoc } from '@/models/User.js'
 import { Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { IUser } from "@/models/User"
 
 export interface JwtPayLoad{
   userId:string,
@@ -11,7 +11,7 @@ export interface JwtPayLoad{
 
 export const generateAccessToken = (user:IUser):string=>{
   const payload : JwtPayLoad = {
-    userId : user._id.toString(),
+    userId : user._id!.toString(),
     organizationId:user.organization.toString(),
     role:user.role
   }
@@ -21,7 +21,7 @@ export const generateAccessToken = (user:IUser):string=>{
 
 export const generateRefreshToken = (user:IUser):string=>{
   return jwt.sign(
-    {userId:user._id.toString()},
+    {userId:user._id!.toString()},
     process.env.JWT_REFRESH_TOKEN as string,
     {expiresIn:'7d'}
   )

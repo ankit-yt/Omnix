@@ -1,8 +1,10 @@
-import { auditPlugin, softDeletePlugin } from "@/models/base/plugins";
+
+import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
+import { IAudit, ISoftDelete } from "@/models/base/types.js";
 import mongoose, { Document } from "mongoose";
 import { Schema } from "mongoose";
 
-export interface IPlan extends Document{
+export interface IPlan extends ISoftDelete , IAudit{
   code:string;
   displayName:string;
   description:string;
@@ -10,21 +12,20 @@ export interface IPlan extends Document{
   currency:string; 
   sortOrder:number;
   limits:{
-    messagePerMonth:number;
+    messagesPerMonth:number;
     knowledgeBaseSizeMB : number;
-    teamMember:number;
+    teamMembers:number;
+    maxWorkspaces: number;
   };
   features:string[];
   createdAt:Date;
   updatedAt:Date;
-  createdBy:mongoose.Types.ObjectId;
-  updatedBy:mongoose.Types.ObjectId;
-  isDeleted:boolean;
-  deletedAt:Date;
   
 }
 
-const PlanSchema = new Schema<IPlan>({
+export interface IPlanDoc extends IPlan , Document {};
+
+const PlanSchema = new Schema<IPlanDoc>({
   code:{
     type:String,
     required:true,
@@ -53,7 +54,7 @@ const PlanSchema = new Schema<IPlan>({
   },
   sortOrder:{type:Number,default:0},
   limits:{
-    messagePerMonth:{
+    messagesPerMonth:{
       type:Number,
       required:true
     },
@@ -61,9 +62,13 @@ const PlanSchema = new Schema<IPlan>({
       type:Number,
       required:true
     },
-    teamMember:{
+    teamMembers:{
       type:Number,
       required:true
+    },
+    maxWorkspaces: {
+      type: Number,
+      required: true
     }
   },
   features:{
@@ -83,4 +88,4 @@ const PlanSchema = new Schema<IPlan>({
 PlanSchema.plugin(softDeletePlugin)
 PlanSchema.plugin(auditPlugin)
 
-export default mongoose.model<IPlan>('Plan', PlanSchema)
+export default mongoose.model<IPlanDoc>('Plan', PlanSchema)
