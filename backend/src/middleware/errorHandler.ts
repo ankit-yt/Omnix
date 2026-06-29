@@ -1,5 +1,5 @@
+import AppError from '@/utils/AppError.js';
 import {NextFunction, Response , Request  , ErrorRequestHandler} from 'express'
-import AppError from "@/utils/AppError";
 
 const handleDuplicateKeyError = (err:any):AppError =>{
   const field = Object.keys(err.keyValue)[0];
