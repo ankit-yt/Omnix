@@ -74,7 +74,6 @@ const ChatSessionSchema = new Schema<IChatSessionDoc>({
 
 ChatSessionSchema.plugin(softDeletePlugin);
 
-ChatSessionSchema.index({ sessionId: 1 });
 ChatSessionSchema.index({ organization: 1, createdAt: -1 });
 ChatSessionSchema.index({ lastActivityAt: 1 }); 
 

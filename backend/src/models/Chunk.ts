@@ -1,50 +1,57 @@
+import mongoose, { Document, Schema } from "mongoose";
 
-import mongoose, { Document, Schema }  from "mongoose";
-
-export interface IChunk{
-  knowledgeBase: mongoose.Types.ObjectId
-  organization:mongoose.Types.ObjectId
-  content:string
-  embedding:number[]
-  pageNumber:number
-  chunkIndex:number
-  createdAt:Date
+export interface IChunk {
+  knowledgeDocument: mongoose.Types.ObjectId; 
+  workspace: mongoose.Types.ObjectId;
+  organization: mongoose.Types.ObjectId;
+  
+  content: string;
+  embedding: number[];
+  pageNumber?: number; 
+  chunkIndex: number;
+  createdAt?: Date;
 }
 
-export interface IChunkDoc extends IChunk , Document {};
+
+export interface IChunkDoc extends IChunk, Document {}
 
 const ChunkSchema = new Schema<IChunkDoc>({
-    knowledgeBase:{
-      type:Schema.Types.ObjectId,
-      ref:"KnowledgeBase",
-      required:true
+    knowledgeDocument: { 
+      type: Schema.Types.ObjectId,
+      ref: "KnowledgeDocument", 
+      required: true
     },
-    organization:{
-      type:Schema.Types.ObjectId,
-      ref:"Organization",
-      required:true
+    workspace: { 
+      type: Schema.Types.ObjectId,
+      ref: "Workspace",
+      required: true
     },
-    content:{
-      type:String,
-      required:true,
+    organization: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true
     },
-    embedding:{
-      type:[Number],
-      required:true
+    content: {
+      type: String,
+      required: true,
     },
-    pageNumber:{
-      type:Number,
-      required:true
+    embedding: {
+      type: [Number],
+      required: true
     },
-    chunkIndex:{
-      type:Number,
-      required:true
+    pageNumber: {
+      type: Number, 
+    },
+    chunkIndex: {
+      type: Number,
+      required: true
     }
-},{
-  timestamps:true
-})
+}, {
+  timestamps: { createdAt: true, updatedAt: false } 
+});
 
-ChunkSchema.index({KnowledgeBase:1 , chunkIndex:1})
-ChunkSchema.index({Organization:1})
+ChunkSchema.index({ knowledgeDocument: 1, chunkIndex: 1 });
+ChunkSchema.index({ workspace: 1 });
+ChunkSchema.index({ organization: 1 });
 
-export default mongoose.model<IChunkDoc>("Chunk", ChunkSchema)
+export default mongoose.model<IChunkDoc>("Chunk", ChunkSchema);

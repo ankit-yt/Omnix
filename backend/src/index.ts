@@ -7,10 +7,14 @@ import helmet from 'helmet'
 import AppError from '@/utils/AppError.js';
 import errorHandler from '@/middleware/errorHandler.js';
 import { connectDatabase } from '@/config/database.js';
+import authRoute from '@/routes/auth.routes.js';
 
 
 const app = express()
 const PORT = process.env.PORT || 5000
+
+
+app.set('trust proxy',1);
 
 app.use(helmet())
 app.use(cors({
@@ -24,10 +28,12 @@ app.get("/health" , (req, res)=>{
   console.log("user visited")
   res.json({
     status:"ok",
-    message:"ERP Genius is running",
+    message:"Omnix is running",
     timeStamp:new Date().toString()
   })
 })
+
+app.use('/',authRoute);
 
 
 

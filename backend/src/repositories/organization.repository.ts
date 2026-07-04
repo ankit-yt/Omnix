@@ -3,6 +3,10 @@ import { IOrganization, IOrganizationDoc, ISubscriptionCacheUpdate } from '@/mod
 import { ClientSession } from "mongoose";
 class OrganizationRepository{
 
+  async findById(organizationId:string):Promise<IOrganization | null>{
+    return Organization.findById(organizationId).select('cachedLimits').lean();
+  }
+
   async findByWebsite(website:string):Promise<IOrganization | null>{
     return Organization.findOne({website}).lean();
   }
