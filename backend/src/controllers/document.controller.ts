@@ -30,9 +30,9 @@ export const uploadAndProcessDocument = asyncHandler(async(req:Request , res:Res
 
   res.status(202).json({
     status:'success',
-    message:'Document accepted. Vector chunking and embedding processing has started in the background.';
+    message:'Document accepted. Vector chunking and embedding processing has started in the background.',
     data:{
-      documentId:newDocument._id;
+      documentId:newDocument._id
     }
   })
 

@@ -14,6 +14,10 @@ class PlanRepository{
   async findAllActive():Promise<IPlan[]>{
     return await Plan.find().sort({sortOrder:1}).lean();
   }
+
+  async create(data:Partial<IPlan>):Promise<IPlanDoc>{
+    return await Plan.create(data);
+  }
   
 }
 

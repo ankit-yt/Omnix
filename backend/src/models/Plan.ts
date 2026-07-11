@@ -1,10 +1,11 @@
 
 import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
 import { IAudit, ISoftDelete } from "@/models/base/types.js";
-import mongoose, { Document } from "mongoose";
+import mongoose, { Document, mongo } from "mongoose";
 import { Schema } from "mongoose";
 
 export interface IPlan extends ISoftDelete , IAudit{
+  _id?:mongoose.Types.ObjectId;
   code:string;
   displayName:string;
   description:string;
@@ -23,7 +24,7 @@ export interface IPlan extends ISoftDelete , IAudit{
   
 }
 
-export interface IPlanDoc extends IPlan , Document {};
+export interface IPlanDoc extends Omit<IPlan, '_id'> , Document {};
 
 const PlanSchema = new Schema<IPlanDoc>({
   code:{
