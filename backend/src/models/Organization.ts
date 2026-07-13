@@ -17,6 +17,8 @@ export interface IOrganization extends ISoftDelete , IAudit  {
   cachedUsage:{
     messagesThisMonth:number
     totalMessages:number
+    totalWorkSpaces:number
+    usedKnowledgeBaseSizeMB:number
     lastResetDate:Date
   }
   cachedLimits:{
@@ -34,7 +36,6 @@ export interface IOrganization extends ISoftDelete , IAudit  {
   };
   onboardingStatus:{
     slugConfigured:boolean;
-    workspaceCreated:boolean;
     knowledgeBaseUploaded:boolean;
     firstSuccessfulMessage:boolean;
     completedAt:Date | null;
@@ -102,6 +103,8 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
   cachedUsage:{
     messagesThisMonth:{type:Number,default:0},
     totalMessages:{type:Number,default:0},
+    totalWorkSpaces:{type:Number,default:1},
+    usedKnowledgeBaseSizeMB: { type: Number, default: 0 },
     lastResetDate:{type:Date, default:Date.now},
   },
   cachedLimits:{
@@ -136,7 +139,6 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
   },
   onboardingStatus:{
     slugConfigured:{type:Boolean , default:false},
-    workspaceCreated:{type:Boolean , default:false},
     knowledgeBaseUploaded:{type:Boolean , default:false},
     firstSuccessfulMessage:{type:Boolean , default:false},
     completedAt:{type:Date , default:null}
@@ -151,6 +153,24 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
       return saftObject
     }
   }
+})
+
+OrganizationSchema.pre("save",function(){
+  const onboarding = this.onboardingStatus;
+
+  const isCompleted = 
+    onboarding.slugConfigured &&
+    onboarding.knowledgeBaseUploaded &&
+    onboarding.firstSuccessfulMessage;
+
+      if (isCompleted && !onboarding.completedAt) {
+    onboarding.completedAt = new Date();
+    }
+
+  if (!isCompleted) {
+    onboarding.completedAt = null;
+  }
+
 })
 
 OrganizationSchema.methods.generateNewApiKey = async function(){

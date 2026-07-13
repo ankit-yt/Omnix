@@ -20,6 +20,25 @@ class WorkspaceRepository {
   async findByIdToUpdate(workspaceId: string): Promise<IWorkspaceDoc | null> {
     return Workspace.findById(workspaceId)
   }
+
+  async existsByOrganization(orgId:string):Promise<boolean>{
+    const workspace = await Workspace.exists({organization:orgId});
+    return workspace != null;
+  }
+
+  async countByOrganization(orgId:string):Promise<number>{
+    return Workspace.countDocuments({
+      organization:orgId,
+    })
+  }
+
+  async findByOrganizationAndName(orgId:string , name:string):Promise<IWorkspace | null>{
+    return await Workspace.findOne({
+      organization:orgId,
+      name,
+    }).lean();
+  }
+
 } 
 
 export default new WorkspaceRepository()

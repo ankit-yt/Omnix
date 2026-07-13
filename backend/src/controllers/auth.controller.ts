@@ -6,9 +6,9 @@ import {Request , Response} from 'express';
 
 export const register = asyncHandler(async(req:Request, res:Response)=>{
   const input:RegisterInput = req.body;
-  
+  console.log(input);
   const result = await authService.register(input, res);
-
+console.log(result);
   res.status(201).json({
     status:'success',
     message:'Registration successful',
@@ -18,6 +18,7 @@ export const register = asyncHandler(async(req:Request, res:Response)=>{
 })
 
 export const login = asyncHandler(async(req:Request, res:Response)=>{
+  console.log("hit login")
   const {email, password} = req.body;
 
   if(!email || !password){
@@ -30,7 +31,7 @@ export const login = asyncHandler(async(req:Request, res:Response)=>{
     status:'success',
     message:'Login successful',
     accessToken : result.accessToken,
-    date:result.data
+    data:result.data
   })
 })
 

@@ -29,6 +29,7 @@ const handleJWTError = ():AppError=>{
 }
 
 const sendDevError = (err:AppError , res:Response):void=>{
+  console.log(err)
   res.status(err.statusCode).json({
     status:err.status,
     message:err.message,

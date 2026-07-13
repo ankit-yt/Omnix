@@ -27,6 +27,10 @@ class OrganizationRepository{
   async updateSubscriptionCache(orgId:string,data:ISubscriptionCacheUpdate,session?:ClientSession):Promise<void>{
     await Organization.findByIdAndUpdate(orgId ,{$set:data},{session})
   }
+
+  async incrementWorkspaceCount(orgId:string , session?:ClientSession):Promise<void>{
+    await Organization.updateOne({_id:orgId},{$inc:{"cachedUsage.totalWorkspaces":1},},{session});
+  }
 }
 
 export default new OrganizationRepository();

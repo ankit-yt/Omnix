@@ -65,7 +65,6 @@ class AuthService{
     
     let user:any;
     let organization:any;
-
     const session = await mongoose.startSession();
 
     try{
@@ -129,6 +128,7 @@ class AuthService{
       if(error.code === 11000){
         throw new AppError('Registration conflict. This email or website was just registered.', 409);
       }
+      console.log(error)
       throw error;
     }finally{
       await session.endSession();
@@ -139,7 +139,7 @@ class AuthService{
 
     await userRepository.updateRefreshToken(user._id.toString(), refreshToken);
     sendRefreshToken(res,refreshToken)
-
+console.log(accessToken);
     return {
       accessToken,
       data:{
@@ -151,8 +151,8 @@ class AuthService{
   }
 
   async login(email:string, password:string, res:Response):Promise<AuthResult>{
-    const user = await userRepository.findByEmail(email);
-
+    const user = await userRepository.findByEmailWithPopulatedId(email);
+console.log(user)
     if(!user){
       throw new AppError('Invalid email or password.',401)
     }

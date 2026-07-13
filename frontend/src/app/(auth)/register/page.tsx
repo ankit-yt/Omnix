@@ -1,8 +1,12 @@
 "use client";
 
 import { FormInput, SPRING } from "@/components/ui/formInput";
+import { authService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/useAuthStore";
+import { AxiosError } from "axios";
 import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 interface IRegistrationData {
@@ -15,6 +19,9 @@ interface IRegistrationData {
 }
 
 export default function RegisterPage() {
+
+  const router = useRouter();
+
   const [formData, setFormData] = useState<IRegistrationData>({
     name: "",
     email: "",
@@ -26,6 +33,7 @@ export default function RegisterPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const setAuth = useAuthStore((state)=>state.setAuth);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
@@ -44,10 +52,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Form submitted successfully:", formData);
+      const data = await authService.register(formData);
+      setAuth(data.user , data.accessToken);
+      router.push('/dashboard');
     } catch (error) {
-      console.error("Registration failed", error);
+      console.log("Registration failed", (error as AxiosError).response?.data);
     } finally {
       setIsLoading(false);
     }

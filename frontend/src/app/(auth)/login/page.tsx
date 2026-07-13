@@ -1,16 +1,23 @@
 "use client";
 
 import { FormInput, SPRING } from "@/components/ui/formInput";
+import { authService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/useAuthStore";
 import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 
 export default function LoginPage() {
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
@@ -22,8 +29,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Logged in with:", { email, password });
+      const data = await authService.login({ email, password });
+console.log(data)
+      setAuth(data.data.user, data.accessToken);
+      const callbackUrl = searchParams.get("callbackUrl");
+      router.push(callbackUrl ?? "/dashboard");
+
     } catch (error) {
       console.error("Login failed", error);
     } finally {
@@ -99,22 +110,22 @@ export default function LoginPage() {
               type="email"
               placeholder="hello@example.com"
               value={email}
-              onChange={(e)=>setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
               mounted={mounted}
               delay={260}
             />
             {/* Password Input */}
-            
+
             <FormInput
               label="Password"
               id="password"
               type="password"
               value={password}
-              onChange={(e)=>setPassword(e.target.value)}
-              required  
-              mounted={mounted}  
-              delay={280}        
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              mounted={mounted}
+              delay={280}
             />
 
             {/* Form Utilities */}

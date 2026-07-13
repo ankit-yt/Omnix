@@ -11,6 +11,15 @@ class UserRespository{
     return User.findOne({email}).lean();
   }
 
+  async findByEmailWithPopulatedId(email:string):Promise<IUser | null>{
+   return User.findOne({ email })
+    .select("+password +loginAttempts +lockUntil")
+    .populate(
+      "organization",
+      "name slug website cachedPlan cachedLimits cachedUsage subscription onboardingStatus apiPrefix"
+    );
+  }
+
   async findByEmailWithSecrets(email:string):Promise<IUser | null>{
     return User.findOne({email}).select('+password +refreshToken +loginAttempts +localUntil');
   }
