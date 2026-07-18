@@ -32,7 +32,7 @@ export interface IOrganization extends ISoftDelete , IAudit  {
     status:'active' | 'cancelled' | 'past_due' | 'expired';
     currentPeriodEnd?:Date | null;
     razorpayCustomerId?:string;
-    razorpaySubscriptionId?:string;
+    razorpayPaymentId?:string;
   };
   onboardingStatus:{
     slugConfigured:boolean;
@@ -132,7 +132,7 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
       type:String,
       default:''
     },
-    razorpaySubscriptionId:{
+    razorpayPaymentId:{
       type:String,
       default:''
     },

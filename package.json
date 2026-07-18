@@ -15,7 +15,8 @@
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@swc/helpers": "^0.5.21"

@@ -3,7 +3,7 @@ import { IWorkspace, IWorkspaceDoc } from "@/models/base/types.js";
 import organizationRepository from "@/repositories/organization.repository.js";
 import workspaceRepository from "@/repositories/workspace.repository.js";
 import AppError from "@/utils/AppError.js";
-import { CreateWorkspaceDto } from "@/validators/workspace.validator.js";
+import { CreateWorkspaceDto, UpdateWorkspaceDto } from "@/validators/workspace.validator.js";
 import mongoose from "mongoose";
 
 class WorkspaceService{
@@ -11,17 +11,10 @@ class WorkspaceService{
 
   async getAllWorkspaces(organizationId:string):Promise<IWorkspace[]>{
 
-    if(!organizationId){
-      throw new AppError('OrganizationId is required',400);
-    }
-
     const orgExists = await workspaceRepository.existsByOrganization(organizationId);
-    if(!orgExists){
-      throw new AppError("The specific organization could not be found.",404);
-    }
-
-    const workspaces = await workspaceRepository.findByOrganization(organizationId);
-    return workspaces;
+    if(!orgExists) throw new AppError("Target organization context invalid",404);
+    
+    return await workspaceRepository.findByOrganization(organizationId);
   }
 
   async createWorkspace(organizationId:string , dto:CreateWorkspaceDto):Promise<IWorkspaceDoc>{
@@ -39,7 +32,7 @@ class WorkspaceService{
       throw new AppError(`Workspace quote exceeded. Your current plan limits you to ${maxAllowed} workspaces.`,403);
     }
 
-    const nameExists = await workspaceRepository.findByOrganizationAndName(organizationId , dto.name);
+    const nameExists = await workspaceRepository.findDuplicateName(organizationId , dto.name);
     if(nameExists){
       throw new AppError("A workspace with this name already exists within your organization.",409);
     }
@@ -52,7 +45,7 @@ class WorkspaceService{
       ...dto
     }, session);
 
-    await organizationRepository.incrementWorkspaceCount(organizationId , session);
+    await organizationRepository.updateWorkspaceCount(organizationId , 1,session);
 
     await session.commitTransaction();
     return newWorkspace;
@@ -65,4 +58,47 @@ class WorkspaceService{
     session.endSession();
   }
 }
+
+  async getWorkspaceById(workspaceId:string , organizationId:string):Promise<IWorkspace>{
+    const workspace = await workspaceRepository.findById(workspaceId);
+
+    if(!workspace || workspace.organization.toString() != organizationId){
+      throw new AppError("Requestd workspace resource not found.",404);
+    }
+
+    return workspace;
+  }
+
+  async updateWorkspace(workspaceId:string , organizationId:string , dto:UpdateWorkspaceDto):Promise<IWorkspaceDoc>{
+    const workspace = await this.getWorkspaceById(workspaceId , organizationId);
+
+    if(dto.name && dto.name !== workspace.name){
+      const nameConflict = await workspaceRepository.findDuplicateName(organizationId ,dto.name , workspaceId);
+      if(nameConflict) throw new AppError("Workspace name choice conflicts with an existing asset.",409);
+    }
+
+    const updatedWorkspace = await workspaceRepository.findByIdAndUpdate(workspaceId, dto );
+    if (!updatedWorkspace) throw new AppError("Failed to update workspace properties.", 500);
+
+    return updatedWorkspace;
+  }
+
+  async deleteWorkspace(workspaceId:string , organizationId:string):Promise<void>{
+    const workspace = await this.getWorkspaceById(workspaceId , organizationId);
+
+    const session = await mongoose.startSession();
+    try{
+       session.startTransaction();
+
+      await workspaceRepository.findByIdAndDelete(workspaceId , session);
+      await organizationRepository.updateWorkspaceCount(organizationId , -1, session);
+    }catch(err){
+      await session.abortTransaction();
+      throw err;
+    }finally{
+      await session.endSession();
+    }
+  }
 }
+
+export default new WorkspaceService();

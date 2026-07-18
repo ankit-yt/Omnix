@@ -17,6 +17,7 @@ import chatRouter from '@/routes/chat.routes.js';
 import planRouter from '@/routes/plan.routes.js';
 import paymentRouter from '@/routes/payment.routes.js';
 import adminRouter from '@/routes/admin.routes.js';
+import workspaceRouter from '@/routes/workspace.routes.js';
 
 
 const app: Application = express()
@@ -42,6 +43,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/plans', planRouter);
 app.use('/api/payments', paymentRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/workspace', workspaceRouter);
 
 
 app.get('/health', (req: Request, res: Response) => {

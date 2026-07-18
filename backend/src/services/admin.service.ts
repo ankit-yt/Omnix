@@ -51,6 +51,20 @@ class AdminService{
 
     return newPromotion;
   }
+
+  async linkRazorpayPlan(adminUserId:string , planCode:string , razorpayPlanId:string){
+    if(planCode.toLowerCase() === 'free'){
+      throw new AppError("The Free plan cannot be linked to a external payment gateway.", 400);
+    }
+
+    const plan = await planRepository.findByCode(planCode);
+    if(!plan){
+      throw new AppError(`Internal plan with code '${planCode}' not found. Run the seeder first.`, 404);
+    }
+
+    const updatedPlan = await planRepository.updateRazorpayPlanId(plan._id.toString() , razorpayPlanId);
+    return updatedPlan;
+  }
 }
 
 export default new AdminService();

@@ -56,13 +56,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               active={pathname === "/"}
             />
             <NavItem
-              href="/documents"
+              href="/dashboard/documents"
               icon={<Database className="h-4.5 w-4.5" />}
               label="Knowledge Base"
               active={pathname?.includes("/documents")}
             />
             <NavItem
-              href="/chat"
+              href="/dashboard/chat"
               icon={<MessageSquare className="h-4.5 w-4.5" />}
               label="Copilot Engine"
               active={pathname?.includes("/chat")}

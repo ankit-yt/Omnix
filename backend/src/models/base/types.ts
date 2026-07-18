@@ -28,5 +28,5 @@ export interface ISubscriptionCacheUpdate {
   'subscription.trialEndsAt'?: Date;
   'subscription.currentPeriodEnd'?: Date;
   'subscription.razorpayCustomerId'?: string;
-  'subscription.razorpaySubscriptionId'?: string;
+  'subscription.razorpayPaymentId'?: string;
 }

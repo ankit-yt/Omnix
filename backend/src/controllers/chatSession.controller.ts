@@ -1,0 +1,29 @@
+import chatSessionService from '@/services/chatSession.service.js';
+import AppError from '@/utils/AppError.js';
+import asyncHandler from '@/utils/asyncHandler.js';
+import {Request,Response} from 'express';
+
+export const getChatSessions = asyncHandler(async(req:Request , res:Response)=>{
+  const organizationId = req.user?.organization?.toString();
+  if(!organizationId){
+    throw new AppError("Unauthorized context missing.",401);
+  }
+  
+  const {workspaceId , page, limit} = req.query;
+  if(!workspaceId){
+    throw new AppError("Missing required query parameter: workspaceId",400);
+  }
+
+  const result = await chatSessionService.getWorkspaceSessions(
+    organizationId,
+    workspaceId as string,
+    Number(page) || 1,
+    Number(limit) ||20
+  );
+
+  res.status(200).json({
+    status:"success",
+    data:result
+  })
+
+})

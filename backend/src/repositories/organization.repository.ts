@@ -1,6 +1,6 @@
 import { Organization } from "@/models/base/index.js";
 import { IOrganization, IOrganizationDoc, ISubscriptionCacheUpdate } from '@/models/base/types.js'
-import { ClientSession } from "mongoose";
+import { ClientSession, UpdateQuery } from "mongoose";
 class OrganizationRepository{
 
   async findById(organizationId:string):Promise<IOrganization | null>{
@@ -28,8 +28,26 @@ class OrganizationRepository{
     await Organization.findByIdAndUpdate(orgId ,{$set:data},{session})
   }
 
+  async update(organizationId:string , data:UpdateQuery<IOrganizationDoc> , session?:ClientSession):Promise<void>{
+    await Organization.findByIdAndUpdate(
+      organizationId,
+      {$set:data},
+      {session}
+    );
+  }
+
   async incrementWorkspaceCount(orgId:string , session?:ClientSession):Promise<void>{
     await Organization.updateOne({_id:orgId},{$inc:{"cachedUsage.totalWorkspaces":1},},{session});
+  }
+
+  async updateWorkspaceCount(organizationId:string , amount:number , session?:ClientSession):Promise<void>{
+    await Organization.updateOne(
+      { _id:organizationId },
+      { $inc:{
+          "cachedUsage.totalWorkspaces":amount,
+          },
+      },{session}
+  );
   }
 }
 

@@ -2,6 +2,8 @@
 import { ClientSession } from 'mongoose'
 import { Workspace } from '@/models/base/index.js'
 import { IWorkspace, IWorkspaceDoc } from '@/models/base/types.js'
+import mongoose from 'mongoose'
+import { UpdateWorkspaceDto } from '@/validators/workspace.validator.js'
 class WorkspaceRepository {
   
   async create(data: Partial<IWorkspace>, session?: ClientSession): Promise<IWorkspaceDoc> {
@@ -21,6 +23,14 @@ class WorkspaceRepository {
     return Workspace.findById(workspaceId)
   }
 
+  async findByIdAndUpdate(workspaceId:string , data:UpdateWorkspaceDto ,  session?: ClientSession):Promise<IWorkspaceDoc | null>{
+    return Workspace.findByIdAndUpdate(workspaceId , data , {new:true , runValidators:true , session });
+  }
+
+  async findByIdAndDelete(workspaceId:string , session?:ClientSession):Promise<IWorkspaceDoc | null>{
+    return Workspace.findByIdAndDelete(workspaceId , {session});
+  }
+
   async existsByOrganization(orgId:string):Promise<boolean>{
     const workspace = await Workspace.exists({organization:orgId});
     return workspace != null;
@@ -32,11 +42,19 @@ class WorkspaceRepository {
     })
   }
 
-  async findByOrganizationAndName(orgId:string , name:string):Promise<IWorkspace | null>{
-    return await Workspace.findOne({
+  async findDuplicateName(orgId:string , name:string , excludeWorkspaceId?:string):Promise<IWorkspace | null>{
+    const filter: mongoose.QueryFilter<IWorkspaceDoc>={
       organization:orgId,
       name,
-    }).lean();
+    }
+
+    if(excludeWorkspaceId){
+      filter._id = {
+        $ne:new mongoose.Types.ObjectId(excludeWorkspaceId)
+      }
+    }
+
+    return Workspace.findOne(filter).lean();
   }
 
 } 

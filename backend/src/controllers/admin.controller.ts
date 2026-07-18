@@ -8,7 +8,7 @@ export const createPlan = asyncHandler(async(req:Request , res:Response)=>{
 
   if(!adminId) throw new AppError('Unauthorized: Admin context missing.',401);
 
-  const {code, displayName , priceInPaise , limits} = req.body;
+  const {code, displayName , priceInPaise , limits ,razorpayPlanId} = req.body;
   if(!code || !displayName || priceInPaise === undefined || !limits){
     throw new AppError('Missing required plan fields: code , displayName , priceInPaise , or limits.',400);
   }
@@ -24,7 +24,7 @@ export const createPlan = asyncHandler(async(req:Request , res:Response)=>{
 
 
 export const createPromotion = asyncHandler(async(req:Request , res:Response)=>{
-  const adminId = req.user?._id?.tostring();
+  const adminId = req.user?._id?.toString();
 
   if(!adminId) throw new AppError('Unauthorized: Admin context missing.',401);
 
@@ -42,3 +42,24 @@ export const createPromotion = asyncHandler(async(req:Request , res:Response)=>{
     data:{promotion}
   });
 });
+
+export const linkRazorpayPlan = asyncHandler(async(req:Request , res:Response)=>{
+  const adminId = req.user?._id?.toString();
+  if (!adminId) throw new AppError('Unauthorized: Admin context missing.', 401);
+
+  const {code} = req.params;
+  const {razorpayPlanId} = req.body;
+
+  if (!razorpayPlanId) {
+    throw new AppError('Razorpay Plan ID is required to complete the linkage.', 400);
+  }
+
+  const updatedPlan = await adminService.linkRazorpayPlan(adminId, code as string, razorpayPlanId);
+
+  res.status(200).json({
+    status:'success',
+    message:`Successfully linked Razorpay ID to the ${code} plan`,
+    data:{plan:updatedPlan}
+  })
+
+})

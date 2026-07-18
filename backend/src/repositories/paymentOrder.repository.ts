@@ -9,8 +9,8 @@ class PaymentOrderRepository{
     return order;
   }
 
-  async findByRazorPayOrderId(razorpayOrderId:string):Promise<IPaymentOrderDoc |  null>{
-    return await PaymentOrder.findOne({razorpayOrderId}).lean();
+  async findByrazorpaySubscriptionId(razorpaySubscriptionId:string):Promise<IPaymentOrderDoc |  null>{
+    return await PaymentOrder.findOne({razorpaySubscriptionId}).lean();
   }
 
   async updatePaymentState(

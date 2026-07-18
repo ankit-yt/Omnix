@@ -7,6 +7,7 @@ import { Schema } from "mongoose";
 export interface IPlan extends ISoftDelete , IAudit{
   _id?:mongoose.Types.ObjectId;
   code:string;
+  razorpayPlanId?: string | null;
   displayName:string;
   description:string;
   priceInPaise:number;
@@ -33,6 +34,10 @@ const PlanSchema = new Schema<IPlanDoc>({
     unique:true,
     lowercase:true,
     trim:true
+  },
+  razorpayPlanId: {
+     type: String,
+     default: null 
   },
   displayName:{
     type:String,

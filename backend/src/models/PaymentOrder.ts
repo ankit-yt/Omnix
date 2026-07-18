@@ -7,7 +7,7 @@ export interface IPaymentOrder{
   currency:string;
   status:'pending'|'success'|'failed';
   paymentMethod:string;
-  razorpayOrderId:string;
+  razorpaySubscriptionId:string;
   razorpayPaymentId?:string;
   errorMessage?:string;
   createdAt:Date;
@@ -43,7 +43,7 @@ const PaymentOrderSchema = new Schema<IPaymentOrderDoc>({
     type:String,
     default:'unknown'
   },
-  razorpayOrderId:{
+  razorpaySubscriptionId:{
     type:String,
     required:true,
     unique:true

@@ -26,7 +26,7 @@ export interface Subscription {
   status: SubscriptionStatus;
   currentPeriodEnd?: string | null;
   razorpayCustomerId?: string;
-  razorpaySubscriptionId?: string;
+  razorpayPaymentId?: string;
 }
 
 export interface OnboardingStatus {
