@@ -37,7 +37,7 @@ class SubscriptionRepository {
         }
       },
       {
-        new: true,
+        returnDocument: 'after',
         session
       }
     );
@@ -60,13 +60,13 @@ class SubscriptionRepository {
         }
       },
       {
-        new: true,
+        returnDocument: 'after',
         session
       }
     );
   }
 
-  async findByRazorpaySubscriptionId(razorpaySubscriptionId:mongoose.Types.ObjectId):Promise<ISubscription | null>{
+  async findByRazorpaySubscriptionId(razorpaySubscriptionId: mongoose.Types.ObjectId): Promise<ISubscription | null> {
     return Subscription.findById(razorpaySubscriptionId).lean();
   }
 }

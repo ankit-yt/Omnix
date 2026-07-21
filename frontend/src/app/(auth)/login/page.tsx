@@ -7,7 +7,8 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-
+import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
 
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
-
+  const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
@@ -30,13 +31,15 @@ export default function LoginPage() {
 
     try {
       const data = await authService.login({ email, password });
-console.log(data)
       setAuth(data.data.user, data.accessToken);
       const callbackUrl = searchParams.get("callbackUrl");
       router.push(callbackUrl ?? "/dashboard");
 
-    } catch (error) {
-      console.error("Login failed", error);
+    } catch (error:any) {
+      console.error("Login failed", error.response.data);
+      setErrorMessage(
+      error.response?.data?.message || "Invalid email or password."
+    );
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +58,7 @@ console.log(data)
         }}
       >
         {/* Header Section */}
-        <div className="mb-10 space-y-2 text-center">
+        <div className="mb-5 space-y-2 text-center">
           <div
             className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 shadow-inner"
             style={{
@@ -101,6 +104,15 @@ console.log(data)
 
         {/* Form Section */}
         <form onSubmit={handleLogin}>
+          {errorMessage && (
+  <div
+    className="flex items-center gap-2 text-[13px] mb-3 justify-center text-red-300"
+    role="alert"
+  >
+    <AlertCircle className="h-4 w-4 shrink-0" />
+    <span>{errorMessage}</span>
+  </div>
+)}
           <fieldset disabled={isLoading} className="space-y-4 group">
 
             {/* Email Input */}
@@ -110,7 +122,10 @@ console.log(data)
               type="email"
               placeholder="hello@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+             onChange={(e) => {
+    setEmail(e.target.value);
+    if (errorMessage) setErrorMessage("");
+  }}
               required
               mounted={mounted}
               delay={260}
@@ -122,7 +137,10 @@ console.log(data)
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage("");
+  }}
               required
               mounted={mounted}
               delay={280}

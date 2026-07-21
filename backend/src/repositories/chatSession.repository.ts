@@ -3,43 +3,43 @@ import { IChatSession, IChatSessionDoc } from "@/models/base/types.js"
 import { CreateChatSessionDto, UpdateChatSessionDto } from "@/validators/chatSession.validator.js";
 import { ClientSession } from "mongoose";
 
-class ChatSessionRepository{
-  async create(organizationId:string ,workspaceId:string, dto:CreateChatSessionDto , session?:ClientSession):Promise<IChatSessionDoc>{
+class ChatSessionRepository {
+  async create(organizationId: string, workspaceId: string, dto: CreateChatSessionDto, session?: ClientSession): Promise<IChatSessionDoc> {
     const chatSession = new ChatSession({
-      organization:organizationId,
-      workspace:workspaceId,
+      organization: organizationId,
+      workspace: workspaceId,
       ...dto,
     });
 
-    await chatSession.save({session});
-    
+    await chatSession.save({ session });
+
     return chatSession;
   }
 
-  async findByIdAndUpdate(chatSessionId:string , dto:UpdateChatSessionDto , session?:ClientSession):Promise<IChatSessionDoc | null>{
-    return ChatSession.findByIdAndUpdate(chatSessionId , dto ,{new:true , runValidators:true , session});
+  async findByIdAndUpdate(chatSessionId: string, dto: UpdateChatSessionDto, session?: ClientSession): Promise<IChatSessionDoc | null> {
+    return ChatSession.findByIdAndUpdate(chatSessionId, dto, { returnDocument: 'after', runValidators: true, session });
   }
 
-  async findById(chatSessionId:string):Promise<IChatSession | null>{
+  async findById(chatSessionId: string): Promise<IChatSession | null> {
     return ChatSession.findById(chatSessionId).lean();
   }
 
-  async findPaginated(organizationId:string , workspaceId:string , skip:number , limit:number):Promise<IChatSessionDoc[]>{
+  async findPaginated(organizationId: string, workspaceId: string, skip: number, limit: number): Promise<IChatSessionDoc[]> {
     return ChatSession.find({
-      organization:organizationId,
-      workspace:workspaceId,
-      isActive:true
+      organization: organizationId,
+      workspace: workspaceId,
+      isActive: true
     }).sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
   }
 
-  async countByWorkspace(organizationId:string, workspaceId:string):Promise<number>{
+  async countByWorkspace(organizationId: string, workspaceId: string): Promise<number> {
     return ChatSession.countDocuments({
-      organization:organizationId,
-      workspace:workspaceId,
-      isActive:true
+      organization: organizationId,
+      workspace: workspaceId,
+      isActive: true
     });
   }
 }

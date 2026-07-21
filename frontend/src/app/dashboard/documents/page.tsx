@@ -1,26 +1,65 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
   FileText, UploadCloud, Search, MoreVertical, 
   X, File, CheckCircle2, AlertCircle 
 } from "lucide-react";
 import { documentService } from "@/services/document.service";
+import { workspaceService } from "@/services/workspace.service"; // Ensure this is imported
 
-// Mock data for workspaces (Later, fetch this from your backend /api/workspaces)
-const MOCK_WORKSPACES = [
-  { id: "ws_1", name: "Avon Express ERP" },
-  { id: "ws_2", name: "PCTE Internal Tools" },
-];
-
-// Mock data for documents
-const MOCK_DOCUMENTS = [
-  { id: "doc_1", name: "Shipping_Logistics_Manual_2026.pdf", workspace: "Avon Express ERP", size: "2.4 MB", status: "ready", date: "Today" },
-  { id: "doc_2", name: "Employee_Onboarding.docx", workspace: "PCTE Internal Tools", size: "1.1 MB", status: "processing", date: "Yesterday" },
-];
-
+import { toast } from "sonner";
 export default function DocumentsPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  
+  // Dynamic State
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch both simultaneously for speed
+      const [fetchedWorkspaces, fetchedDocs] = await Promise.all([
+        workspaceService.getWorkspaces(),
+        documentService.getDocuments() // Make sure this exists in your documentService
+      ]);
+      setWorkspaces(fetchedWorkspaces);
+      console.log(fetchedDocs)
+      setDocuments(fetchedDocs);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load knowledge base.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Client-side search filtering
+  const filteredDocuments = documents.filter(doc => 
+    doc.originalFileName
+.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Helper to format bytes to MB
+  const formatSize = (bytes: number) => {
+    if (!bytes) return "Unknown";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  };
+
+  // Helper to resolve workspace name
+  const getWorkspaceName = (workspaceId: string) => {
+    // If backend populates it
+    if (typeof workspaceId === 'object' && workspaceId !== null) return (workspaceId as any).name;
+    // If it's just an ID
+    const ws = workspaces.find(w => w._id === workspaceId);
+    return ws ? ws.name : "Unknown Workspace";
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden p-8 lg:p-12">
@@ -47,6 +86,8 @@ export default function DocumentsPage() {
           <input
             type="text"
             placeholder="Search documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="h-11 w-full rounded-2xl bg-white/5 pl-11 pr-4 text-sm text-white outline-none ring-1 ring-white/10 transition-all placeholder:text-white/30 focus:bg-white/10 focus:ring-white/30"
           />
         </div>
@@ -54,61 +95,96 @@ export default function DocumentsPage() {
 
       {/* Document List (Glass Table) */}
       <div className="flex-1 overflow-y-auto rounded-3xl bg-white/[0.02] ring-1 ring-white/[0.05] backdrop-blur-xl">
-        <table className="w-full text-left text-sm text-white/70">
-          <thead className="sticky top-0 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md">
-            <tr>
-              <th className="px-6 py-4 font-medium text-white/40">Document Name</th>
-              <th className="px-6 py-4 font-medium text-white/40">Workspace</th>
-              <th className="px-6 py-4 font-medium text-white/40">Size</th>
-              <th className="px-6 py-4 font-medium text-white/40">Status</th>
-              <th className="px-6 py-4 font-medium text-white/40 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {MOCK_DOCUMENTS.map((doc) => (
-              <tr key={doc.id} className="transition-colors hover:bg-white/[0.02]">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
-                      <FileText className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="font-medium text-white">{doc.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">{doc.workspace}</td>
-                <td className="px-6 py-4">{doc.size}</td>
-                <td className="px-6 py-4">
-                  {doc.status === 'ready' ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
-                      <CheckCircle2 className="h-3 w-3" /> Ready
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" /> Processing
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="rounded-lg p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
-                </td>
+        {isLoading ? (
+          <div className="flex h-40 items-center justify-center text-white/40 text-sm">
+            Loading knowledge base...
+          </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="flex h-40 items-center justify-center text-white/40 text-sm">
+            {searchQuery ? "No documents match your search." : "No documents uploaded yet."}
+          </div>
+        ) : (
+          <table className="w-full text-left text-sm text-white/70">
+            <thead className="sticky top-0 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md z-10">
+              <tr>
+                <th className="px-6 py-4 font-medium text-white/40">Document Name</th>
+                <th className="px-6 py-4 font-medium text-white/40">Workspace</th>
+                <th className="px-6 py-4 font-medium text-white/40">Size</th>
+                <th className="px-6 py-4 font-medium text-white/40">Status</th>
+                <th className="px-6 py-4 font-medium text-white/40 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredDocuments.map((doc) => (
+                <tr key={doc._id} className="transition-colors hover:bg-white/[0.02]">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+                        <FileText className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="font-medium text-white">{doc.name || doc.originalName}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">{getWorkspaceName(doc.workspace || doc.workspaceId)}</td>
+                  <td className="px-6 py-4">{formatSize(doc.size)}</td>
+                  <td className="px-6 py-4">
+                    {doc.status === 'ready' || doc.status === 'embedded' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                        <CheckCircle2 className="h-3 w-3" /> Ready
+                      </span>
+                    ) : doc.status === 'failed' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
+                        <AlertCircle className="h-3 w-3" /> Failed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" /> Processing
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => {
+                        // TODO: Implement Delete
+                        toast.error("Delete not implemented yet");
+                      }}
+                      className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* The Upload Modal */}
       {isUploadModalOpen && (
-        <UploadModal onClose={() => setIsUploadModalOpen(false)} />
+        <UploadModal 
+          workspaces={workspaces}
+          onClose={() => setIsUploadModalOpen(false)} 
+          onSuccess={() => {
+            setIsUploadModalOpen(false);
+            fetchData(); // Refresh the list after upload!
+          }}
+        />
       )}
     </div>
   );
 }
 
 // --- Upload Modal Sub-Component ---
-function UploadModal({ onClose }: { onClose: () => void }) {
+function UploadModal({ 
+  workspaces, 
+  onClose, 
+  onSuccess 
+}: { 
+  workspaces: any[], 
+  onClose: () => void, 
+  onSuccess: () => void 
+}) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [workspaceId, setWorkspaceId] = useState("");
@@ -132,20 +208,29 @@ function UploadModal({ onClose }: { onClose: () => void }) {
   };
 
   const handleUpload = async () => {
-    if (!file || !workspaceId) return;
-    setIsUploading(true);
+    if (!file || !workspaceId) {
+      toast.error("Please select a file and a workspace.");
+      return;
+    }
     
-    try{
+    setIsUploading(true);
+    const loadingToast = toast.loading("Uploading and processing document...");
+    
+    try {
       const formData = new FormData();
-      formData.append("document",file);
-      formData.append("workspaceId",workspaceId);
+      formData.append("document", file);
+      formData.append("workspaceId", workspaceId);
 
       await documentService.upload(formData);
 
+      toast.success("Document uploaded successfully!", { id: loadingToast });
       setFile(null);
-    }catch(err){
-      console.log("Upload failed:",err);
-    }finally{
+      onSuccess(); // Trigger parent refresh
+      
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      toast.error(err.response?.data?.message || "Failed to upload document.", { id: loadingToast });
+    } finally {
       setIsUploading(false);
     }
   };
@@ -154,10 +239,10 @@ function UploadModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/60 px-4 backdrop-blur-md transition-all">
       <div className="relative w-full max-w-lg animate-[rise_0.3s_ease-out_both] rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
         
-        {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+          disabled={isUploading}
+          className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
@@ -172,11 +257,12 @@ function UploadModal({ onClose }: { onClose: () => void }) {
             <select 
               value={workspaceId}
               onChange={(e) => setWorkspaceId(e.target.value)}
-              className="h-12 w-full appearance-none rounded-2xl bg-white/5 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-white/30 [&>option]:bg-[#0a0d16]"
+              disabled={isUploading}
+              className="h-12 w-full appearance-none rounded-2xl bg-white/5 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-white/30 disabled:opacity-50 [&>option]:bg-[#0a0d16]"
             >
               <option value="" disabled>Select a workspace...</option>
-              {MOCK_WORKSPACES.map(ws => (
-                <option key={ws.id} value={ws.id}>{ws.name}</option>
+              {workspaces.map(ws => (
+                <option key={ws._id} value={ws._id}>{ws.name}</option>
               ))}
             </select>
             <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
@@ -195,12 +281,12 @@ function UploadModal({ onClose }: { onClose: () => void }) {
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={() => inputRef.current?.click()}
+              onClick={() => !isUploading && inputRef.current?.click()}
               className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 transition-all ${
                 dragActive 
                   ? "border-white/40 bg-white/10" 
                   : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
-              }`}
+              } ${isUploading ? "pointer-events-none opacity-50" : ""}`}
             >
               <input 
                 ref={inputRef}
@@ -216,7 +302,6 @@ function UploadModal({ onClose }: { onClose: () => void }) {
               <p className="mt-1 text-xs text-white/40">PDF, TXT, DOCX, or CSV (Max 10MB)</p>
             </div>
           ) : (
-            // File Selected State
             <div className="flex items-center justify-between rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
@@ -229,7 +314,8 @@ function UploadModal({ onClose }: { onClose: () => void }) {
               </div>
               <button 
                 onClick={() => setFile(null)}
-                className="rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                disabled={isUploading}
+                className="rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -241,7 +327,8 @@ function UploadModal({ onClose }: { onClose: () => void }) {
         <div className="flex gap-3">
           <button 
             onClick={onClose}
-            className="h-12 flex-1 rounded-2xl bg-white/5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+            disabled={isUploading}
+            className="h-12 flex-1 rounded-2xl bg-white/5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -250,7 +337,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
             disabled={!file || !workspaceId || isUploading}
             className="h-12 flex-1 rounded-2xl bg-white text-sm font-medium text-black transition-all hover:bg-white/90 active:scale-95 disabled:opacity-50 disabled:hover:bg-white disabled:active:scale-100"
           >
-            {isUploading ? "Uploading & Embedding..." : "Upload Document"}
+            {isUploading ? "Processing..." : "Upload Document"}
           </button>
         </div>
 

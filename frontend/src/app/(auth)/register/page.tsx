@@ -4,7 +4,7 @@ import { FormInput, SPRING } from "@/components/ui/formInput";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
 import { AxiosError } from "axios";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const setAuth = useAuthStore((state)=>state.setAuth);
-
+ const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
@@ -55,8 +55,10 @@ export default function RegisterPage() {
       const data = await authService.register(formData);
       setAuth(data.user , data.accessToken);
       router.push('/dashboard');
-    } catch (error) {
+    } catch (error : any) {
       console.log("Registration failed", (error as AxiosError).response?.data);
+      setErrorMessage(
+      error.response?.data?.message || "Something went wrong.")
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +123,16 @@ export default function RegisterPage() {
 
         {/* Form Section */}
         <form onSubmit={handleRegister}>
+
+           {errorMessage && (
+  <div
+    className="flex items-center gap-2 text-[13px] mb-3 justify-center text-red-300"
+    role="alert"
+  >
+    <AlertCircle className="h-4 w-4 shrink-0" />
+    <span>{errorMessage}</span>
+  </div>
+)}
           <fieldset disabled={isLoading} className="space-y-4 group">
             <FormInput
               label="Full Name"

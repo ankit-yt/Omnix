@@ -8,15 +8,6 @@ const PUBLIC_ROUTES = [
 export function proxy(request:NextRequest){
   const {pathname} = request.nextUrl;
 
-  // if(
-  //   pathname.startsWith("/_next") ||
-  //   pathname.startsWith("/api") ||
-  //   pathname === "/favicon.ico" ||
-  //   pathname.includes(".")
-  // ){
-  //   return NextResponse.next();
-  // }
-
   const isPublicRoute = PUBLIC_ROUTES.some((route)=>
     pathname.startsWith(route) || pathname == "/"
   );

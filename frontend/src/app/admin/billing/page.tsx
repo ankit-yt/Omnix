@@ -1,0 +1,236 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { adminService } from '@/services/admin.service';
+import { X, Pencil, CheckCircle2, AlertTriangle } from 'lucide-react';
+
+import { toast } from "sonner";
+
+
+export default function AdminBillingPage() {
+  const [plans, setPlans] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modal State
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
+  const [formData, setFormData] = useState({ displayName: '', description: '', razorpayPlanId: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchPlans = async () => {
+    try {
+      const data = await adminService.getPlans();
+      setPlans(data);
+    } catch (error) {
+      toast.error('Failed to load plans.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const openEditModal = (plan: any) => {
+    setEditingPlan(plan);
+    setFormData({
+      displayName: plan.displayName || '',
+      description: plan.description || '',
+      razorpayPlanId: plan.razorpayPlanId || '',
+    });
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+   
+      const payload = {
+  displayName: formData.displayName,
+  description: formData.description,
+  ...(formData.razorpayPlanId.trim() && {
+    razorpayPlanId: formData.razorpayPlanId.trim(),
+  }),
+};
+
+
+      await adminService.updatePlan(editingPlan.code, payload);
+      toast.success(`${formData.displayName} updated successfully.`);
+      setEditingPlan(null); // Close modal
+      fetchPlans(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update plan.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden p-8 lg:p-12">
+      <header className="mb-8">
+        <h1 className="text-3xl font-medium tracking-tight text-white">Billing Plans</h1>
+        <p className="mt-2 max-w-2xl text-sm text-white/40">
+          Manage your subscription tiers and external payment gateway linkages. Core pricing is immutable to protect active subscriptions.
+        </p>
+      </header>
+
+      {/* Data Table */}
+      <div className="flex-1 overflow-y-auto rounded-3xl bg-white/[0.02] ring-1 ring-white/[0.05] backdrop-blur-xl">
+        <table className="w-full text-left text-sm">
+          <thead className="sticky top-0 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md">
+            <tr>
+              <th className="px-6 py-4 font-medium text-white/40">Plan Details</th>
+              <th className="px-6 py-4 font-medium text-white/40">Base Price</th>
+              <th className="px-6 py-4 font-medium text-white/40">Gateway Link</th>
+              <th className="px-6 py-4 text-right font-medium text-white/40">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {plans.map((plan) => (
+              <tr key={plan._id} className="transition-colors hover:bg-white/[0.02]">
+                <td className="px-6 py-4">
+                  <div className="text-sm font-medium text-white">{plan.displayName}</div>
+                  <div className="mt-1 font-mono text-xs text-white/40">code: {plan.code}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-white/70">₹{(plan.priceInPaise / 100).toLocaleString()}</div>
+                  <div className="text-xs text-white/40">{plan.currency} / billing cycle</div>
+                </td>
+                <td className="px-6 py-4">
+                  {plan.code === 'free' ? (
+                    <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-white/40 ring-1 ring-white/10">
+                      N/A (System Managed)
+                    </span>
+                  ) : plan.razorpayPlanId ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                      <CheckCircle2 className="h-3 w-3" /> Active: {plan.razorpayPlanId}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400 ring-1 ring-amber-500/20">
+                      <AlertTriangle className="h-3 w-3" /> Missing Razorpay ID
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    onClick={() => openEditModal(plan)}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit Configuration
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Edit Modal Overlay */}
+      {editingPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/60 px-4 backdrop-blur-md transition-all">
+          <div className="relative w-full max-w-lg animate-[rise_0.3s_ease-out_both] overflow-hidden rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
+
+            <button
+              onClick={() => setEditingPlan(null)}
+              className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h2 className="mb-2 text-2xl font-medium tracking-tight text-white">
+              Configure {editingPlan.code.toUpperCase()} Tier
+            </h2>
+            <p className="mb-8 text-sm text-white/40">Update marketing details and payment gateway links.</p>
+
+            <form onSubmit={handleSave} className="space-y-6">
+              {/* Immutable Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-medium text-white/40">Plan Code (Locked)</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={editingPlan.code}
+                    className="h-11 w-full cursor-not-allowed rounded-2xl bg-white/[0.02] px-4 text-sm text-white/30 outline-none ring-1 ring-white/5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[13px] font-medium text-white/40">Price (Locked)</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={`₹${editingPlan.priceInPaise / 100}`}
+                    className="h-11 w-full cursor-not-allowed rounded-2xl bg-white/[0.02] px-4 text-sm text-white/30 outline-none ring-1 ring-white/5"
+                  />
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-white/5" />
+
+              {/* Mutable Fields */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-medium text-white/60">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  className="h-12 w-full rounded-2xl bg-white/5 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-white/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[13px] font-medium text-white/60">Description</label>
+                <textarea
+                  rows={2}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full rounded-2xl bg-white/5 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-white/30 resize-none"
+                />
+              </div>
+
+              {editingPlan.code !== 'free' && (
+                <div className="space-y-2">
+                  <label className="text-[13px] font-medium text-white/60">Razorpay Plan ID</label>
+                  <input
+                    type="text"
+                    placeholder="plan_XXXXXXXXXXXXXX"
+                    value={formData.razorpayPlanId}
+                    onChange={(e) => setFormData({ ...formData, razorpayPlanId: e.target.value })}
+                    className="h-12 w-full rounded-2xl bg-white/5 px-4 font-mono text-sm text-white outline-none ring-1 ring-white/10 transition-all placeholder:text-white/20 focus:bg-white/10 focus:ring-white/30"
+                  />
+                  <p className="text-xs text-white/40">Ensure this exactly matches the ID in your Razorpay Dashboard.</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingPlan(null)}
+                  className="h-12 flex-1 rounded-2xl bg-white/5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="h-12 flex-1 rounded-2xl bg-white text-sm font-medium text-black transition-all hover:bg-white/90 active:scale-95 disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Configuration'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

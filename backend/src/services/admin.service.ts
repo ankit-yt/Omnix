@@ -2,6 +2,7 @@ import { IPlan, IPromotion } from '@/models/base/types.js';
 import planRepository from '@/repositories/plan.repository.js';
 import promotionRepository from '@/repositories/promotion.repository.js';
 import AppError from '@/utils/AppError.js';
+import { updatePlanDto } from '@/validators/admin.validator.js';
 import mongoose from 'mongoose';
 class AdminService{
 
@@ -63,6 +64,20 @@ class AdminService{
     }
 
     const updatedPlan = await planRepository.updateRazorpayPlanId(plan._id.toString() , razorpayPlanId);
+    return updatedPlan;
+  }
+
+  async updatePlan(adminUserId:string , planCode:string , dto:updatePlanDto){
+    const plan = await planRepository.findByCode(planCode);
+    if(!plan){
+      throw new AppError(`Plan with code '${planCode}' not found.`, 404);
+    }
+
+    if(planCode.toLowerCase() == 'free' && dto.razorpayPlanId){
+      throw new AppError("The Free plan cannot be linked to an external payment gateway.", 400);
+    }
+
+    const updatedPlan = await planRepository.findByIdAndUpdate(plan._id , dto);
     return updatedPlan;
   }
 }

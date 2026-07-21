@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Database,
@@ -13,11 +13,26 @@ import {
 import { NavItem } from "@/components/ui/navItem";
 import { useLogout } from "@/hooks/useLogout";
 import { useInitializeAuth } from "@/hooks/useInitializeAuth";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+
+  const router = useRouter();
   const pathname = usePathname();
   const logout = useLogout();
   const { loading } = useInitializeAuth();
+
+  const user = useAuthStore((state)=>state.user);
+
+  useEffect(()=>{
+    if (!loading && user && user.role !== 'super_admin') {
+      toast.error('Access Denied!');
+      router.replace('/dashboard');
+
+    }
+  },[loading , user, router]);
 
   if (loading) {
     return (
@@ -26,6 +41,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     )
   }
+
+  if (!user || user.role !== 'super_admin') {
+    return null;
+  }
+
   return (
     <div className="flex inset-0 bg-center h-screen w-full bg-cover overflow-hidden p-4 md:p-6"
       style={{
@@ -67,13 +87,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               label="Copilot Engine"
               active={pathname?.includes("/chat")}
             />
-
-             <NavItem
-              href="/dashboard/workspaces"
-              icon={<MessageSquare className="h-4.5 w-4.5" />}
-              label="Workspaces"
-              active={pathname?.includes("/workspace")}
-            />
           </nav>
 
           {/* Secondary Navigation */}
@@ -81,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <h3 className="mb-3 px-4 text-[11px] font-medium tracking-wider text-white/30 uppercase">Preferences</h3>
             <nav className="space-y-1.5">
               <NavItem
-                href="/dashboard/billing"
+                href="/billing"
                 icon={<CreditCard className="h-4.5 w-4.5" />}
                 label="Billing & Limits"
                 active={pathname?.includes("/billing")}

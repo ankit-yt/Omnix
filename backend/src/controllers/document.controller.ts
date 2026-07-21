@@ -65,3 +65,20 @@ export const uploadAndProcessDocument = asyncHandler(async(req:Request , res:Res
   })
 
 })
+
+export const getDocuments = asyncHandler(async (req: Request, res: Response) => {
+  const organizationId = req.user?.organization?.toString();
+  const workspaceId = req.query.workspaceId as string; 
+
+  if (!organizationId) {
+    throw new AppError('Unauthorized: User token context missing', 401);
+  }
+
+  const documents = await documentService.getDocuments(organizationId, workspaceId);
+
+  res.status(200).json({
+    status: 'success',
+    results: documents.length,
+    data: { documents } 
+  });
+});

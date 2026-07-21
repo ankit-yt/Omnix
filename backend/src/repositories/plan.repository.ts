@@ -1,22 +1,23 @@
 import { Plan } from '@/models/base/index.js';
 import { IPlan, IPlanDoc } from '@/models/base/types.js';
-import {ClientSession} from 'mongoose';
+import { updatePlanDto } from '@/validators/admin.validator.js';
+import mongoose, { ClientSession } from 'mongoose';
 
-class PlanRepository{
+class PlanRepository {
 
-  async findByCode(code:string):Promise<IPlanDoc | null>{
-    return Plan.findOne({code}).lean();
+  async findByCode(code: string): Promise<IPlanDoc | null> {
+    return Plan.findOne({ code }).lean();
   }
 
-  async findById(id:string):Promise<IPlan | null>{
+  async findById(id: string): Promise<IPlan | null> {
     return await Plan.findById(id).lean();
   }
 
-  async findAllActive():Promise<IPlan[]>{
-    return await Plan.find().sort({sortOrder:1}).lean();
+  async findAllActive(): Promise<IPlan[]> {
+    return await Plan.find().sort({ sortOrder: 1 }).lean();
   }
 
-  async create(data:Partial<IPlan>):Promise<IPlanDoc>{
+  async create(data: Partial<IPlan>): Promise<IPlanDoc> {
     return await Plan.create(data);
   }
 
@@ -24,23 +25,27 @@ class PlanRepository{
     return Plan.findOne({ razorpayPlanId }).lean();
   }
 
-  async updateRazorpayPlanId(planId:string , razorpayPlanId:string , session?:ClientSession):Promise<IPlanDoc | null>{
+  async updateRazorpayPlanId(planId: string, razorpayPlanId: string, session?: ClientSession): Promise<IPlanDoc | null> {
     return Plan.findByIdAndUpdate(
       planId,
       {
-        $set:{
+        $set: {
           razorpayPlanId
         }
       },
       {
-        new:true,
-        runValidators:true,
+        returnDocument: 'after',
+        runValidators: true,
         session
       }
     )
   }
 
-  
+  async findByIdAndUpdate(planId: mongoose.Types.ObjectId, dto: updatePlanDto): Promise<IPlanDoc | null> {
+    return Plan.findByIdAndUpdate(planId, { $set: dto }, { returnDocument: 'after', runValidators: true });
+  };
+
+
 }
 
 export default new PlanRepository();

@@ -4,6 +4,7 @@ import { Inter, Geist } from "next/font/google"
 import React from "react"
 import { cn } from "@/lib/utils";
 
+import { Toaster } from "sonner";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,6 +19,11 @@ export default function layout({ children }: { children: React.ReactNode }) {
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={inter.className}>
         {children}
+         <Toaster
+          position="top-right"
+          richColors
+          expand
+        />
       </body>
     </html>
   )

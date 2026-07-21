@@ -16,7 +16,7 @@ export interface CachedLimits {
 export interface CachedUsage {
   messagesThisMonth: number;
   totalMessages: number;
-  totalWorkSpaces:number
+  totalWorkspaces:number
   usedKnowledgeBaseSizeMB:number
   lastResetDate: string;
 }

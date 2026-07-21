@@ -63,3 +63,16 @@ export const linkRazorpayPlan = asyncHandler(async(req:Request , res:Response)=>
   })
 
 })
+
+export const updatePlan = asyncHandler(async(req:Request ,res:Response)=>{
+  console.log("helllo")
+  const adminId = req.user?._id?.toString();
+  if(!adminId) throw new AppError('Unauthorized.',401);
+
+  const updatePlan = await adminService.updatePlan(adminId , req.params.code as string ,req.body);
+
+  res.status(200).json({
+    status:'success',
+    data:{plan:updatePlan}
+  })
+})

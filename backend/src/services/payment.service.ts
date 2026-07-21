@@ -3,7 +3,7 @@ import planRepository from '@/repositories/plan.repository.js';
 import AppError from '@/utils/AppError.js';
 import mongoose from 'mongoose';
 import Razorpay from 'razorpay';
-import crypto from 'crypto'
+import crypto from 'crypto';
 import promotionRepository from '@/repositories/promotion.repository.js';
 import subscriptionRepository from '@/repositories/subscription.repository.js';
 import organizationRepository from '@/repositories/organization.repository.js';
@@ -11,7 +11,6 @@ import organizationRepository from '@/repositories/organization.repository.js';
 class PaymentService {
   private razorpay: Razorpay;
   private webhookSecret: string;
-
 
   constructor() {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -29,13 +28,9 @@ class PaymentService {
   async createCheckOutSession(organizationId: string, planId: string) {
     const plan = await planRepository.findById(planId);
     if (!plan) throw new AppError('Requested plan does not exist.', 404);
-
-    if (!plan.razorpayPlanId) {
-      throw new AppError(`The ${plan.displayName} plan is not configured for external billing.`, 400);
-    }
+    if (!plan.razorpayPlanId) throw new AppError(`The ${plan.displayName} plan is not configured for external billing.`, 400);
 
     const activePromo = await promotionRepository.findBestActiveForPlan(planId);
-
     let finalAmountInPaise = plan.priceInPaise;
     let appliedPromtionNotes = undefined;
 
@@ -44,17 +39,32 @@ class PaymentService {
       finalAmountInPaise = Math.max(0, plan.priceInPaise - discountAmount);
       appliedPromtionNotes = `Automatic sale Applied: ${activePromo.name} (-${activePromo.discountPercentage}%)`;
     }
+
     try {
+      const existingPendingOrder = await mongoose.model('PaymentOrder').findOne({
+        organizationId: new mongoose.Types.ObjectId(organizationId),
+        status: 'pending',
+        amount: finalAmountInPaise
+      });
+
+      if (existingPendingOrder) {
+        return {
+          razorpaySubscriptionId: existingPendingOrder.razorpaySubscriptionId,
+          amount: finalAmountInPaise,
+          currency: plan.currency,
+          dbOrderId: existingPendingOrder._id
+        };
+      }
 
       const rzpSubscription = await this.razorpay.subscriptions.create({
-        plan_id : plan.razorpayPlanId,
+        plan_id: plan.razorpayPlanId,
         customer_notify: 1,
         total_count: 120,
-      })
+      });
 
       const paymentOrder = await paymentOrderRepository.create({
         organizationId: new mongoose.Types.ObjectId(organizationId),
-        amount: plan.priceInPaise,
+        amount: finalAmountInPaise,
         currency: plan.currency,
         status: 'pending',
         razorpaySubscriptionId: rzpSubscription.id,
@@ -68,7 +78,6 @@ class PaymentService {
         dbOrderId: paymentOrder._id
       };
     } catch (error: any) {
-      console.log('[RAZORPAY_ORDER_ERROR', error);
       throw new AppError('Failed to initiate payment gateway session.', 502);
     }
   }
@@ -79,7 +88,7 @@ class PaymentService {
       .update(rawBody)
       .digest('hex');
 
-    if (expectedSignature != signature) {
+    if (expectedSignature !== signature) {
       throw new AppError('Invalid webhook signature. Possible tampering detected.', 400);
     }
 
@@ -91,105 +100,129 @@ class PaymentService {
     }
 
     const rzpSubId = payload.payload.subscription.entity.id;
-    const rzpPaymentId = payload.payload.payment?.entity?.id;
-    const rzpPlanId = payload.payload.subscription.entity.plan_id;
+    
+    const result = await this.syncRazorpaySubscription(rzpSubId);
+    return result;
+  }
 
+  async syncRazorpaySubscription(rzpSubscriptionId: string) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
+      // 1. Ask Razorpay for the absolute real-world status
+      const rzpSub = await this.razorpay.subscriptions.fetch(rzpSubscriptionId);
+      
+      // 2. Resolve the Organization ID directly from our database (crucial for webhooks)
+      let organizationId: string;
+      let subscriptionOrder = await paymentOrderRepository.findByrazorpaySubscriptionId(rzpSubscriptionId);
+      let dbSubscription = await mongoose.model('Subscription').findOne({ razorPaySubscriptionId: rzpSubscriptionId });
 
-      const paymentOrder = await paymentOrderRepository.findByrazorpaySubscriptionId(rzpSubId);
-      if (!paymentOrder) {
-        throw new AppError(`Payment order ${rzpSubId} not found in the database.`, 404);
-      }
-
-      if (paymentOrder.status === 'success') {
-        await session.abortTransaction();
-        return { status: 'success', message: 'Webhook already processd previously.' };
-      }
-
-      if (eventType === 'subscription.activated' || eventType === 'subscription.charges') {
-        await paymentOrderRepository.updatePaymentState(
-          paymentOrder._id,
-          {
-            status: 'success',
-            razorpayPaymentId: rzpPaymentId
-          }
-        )
-      }
-
-      const plan = await planRepository.findByRazorpayPlanId(rzpPlanId);
-      if (!plan) throw new AppError('Associated plan not found in database.', 404);
-
-
-      let dbSubscription = await subscriptionRepository.findByOrganization(paymentOrder.organizationId.toString());
-
-      if (!dbSubscription || dbSubscription.status === 'cancelled') {
-        dbSubscription = await subscriptionRepository.create({
-          organization: paymentOrder.organizationId,
-          plan: plan.code,
-          status: "active",
-          razorPaySubscriptionId: rzpSubId,
-          lockedLimits: plan.limits,
-          payments: [paymentOrder._id],
-          lastPayment: paymentOrder._id,
-          history: [{
-            event: 'activated',
-            toPlan: plan.code,
-            toStatus: 'active',
-            note: 'Initial Subscription creation on successful payment.'
-          }]
-        }, session);
+      if (subscriptionOrder) {
+        organizationId = subscriptionOrder.organizationId.toString();
+      } else if (dbSubscription) {
+        organizationId = dbSubscription.organization.toString();
       } else {
-        await subscriptionRepository.recordRenewal(
-          dbSubscription._id!,
-          paymentOrder._id,
-          {
-            event: 'renewed',
-            toPlan: plan.code,
-            toStatus: 'active',
-            note: 'Recurring monthly payment successful.'
-          },
-          session
-        );
+        throw new AppError(`No internal mapping found for Razorpay Subscription: ${rzpSubscriptionId}`, 404);
       }
 
-      if (eventType === 'subscription.cancelled') {
-        const dbSubscription = await subscriptionRepository.findByRazorpaySubscriptionId(rzpSubId);
+      // Fetch the actual DB Subscription now that we know the Org ID
+      dbSubscription = await subscriptionRepository.findByOrganization(organizationId);
 
-        if (dbSubscription) {
+      // FLOW A: CANCELLED OR HALTED 
+      if (rzpSub.status === 'cancelled' || rzpSub.status === 'halted') {
+        if (dbSubscription && dbSubscription.status !== 'cancelled') {
           await subscriptionRepository.cancel(dbSubscription._id!, {
             event: 'cancelled',
             fromPlan: dbSubscription.plan,
             toPlan: 'free',
             toStatus: 'cancelled',
-            note: 'Razorpay subscription gateway cancellation event confirmed.'
-          });
+            note: 'System Sync: Subscription found cancelled in Razorpay.'
+          },session); 
 
           const freePlan = await planRepository.findByCode('free');
           if (freePlan) {
             await organizationRepository.update(
-              dbSubscription.organization.toString(),
+              organizationId,
               {
                 "subscription.status": "cancelled",
-                cachedPlan: "free",
+                cachedPlan: freePlan.code,
                 cachedLimits: freePlan.limits
               },
               session
-            )
-          };
-          console.log(`Organization data boundaries adjusted down to free tier constraints for subscription: ${rzpSubId}`)
-        } else {
-          console.error(`Cancellation event received for tracking token containing no baseline DB row matching: ${rzpSubId}`)
+            );
+          }
+        }
+        await session.commitTransaction();
+        return { status: 'success', message: 'Subscription synced as cancelled. Limits downgraded.' };
+      }
+
+      // FLOW B: ACTIVE OR AUTHENTICATED 
+      if (rzpSub.status === 'active' || rzpSub.status === 'authenticated') {
+        
+        if (subscriptionOrder && subscriptionOrder.status !== 'success') {
+          await paymentOrderRepository.updatePaymentState(
+            subscriptionOrder._id,
+            { status: 'success' },
+            session
+          );
         }
 
+        const plan = await planRepository.findByRazorpayPlanId(rzpSub.plan_id.toString());
+        if (!plan) throw new AppError('Associated plan not found in database.', 404);
+
+        if (!dbSubscription || dbSubscription.status === 'cancelled') {
+          await subscriptionRepository.create({
+            organization: new mongoose.Types.ObjectId(organizationId),
+            plan: plan.code,
+            status: 'active',
+            razorPaySubscriptionId: rzpSubscriptionId,
+            lockedLimits: plan.limits,
+            payments: subscriptionOrder ? [subscriptionOrder._id] : [],
+            lastPayment: subscriptionOrder ? subscriptionOrder._id : null,
+            history: [{
+              event: 'activated',
+              toPlan: plan.code,
+              toStatus: 'active',
+              note: 'System Sync: New active subscription.'
+            }]
+          }, session);
+        } else {
+          if (subscriptionOrder) {
+            await subscriptionRepository.recordRenewal(
+              dbSubscription._id!,
+              subscriptionOrder._id,
+              {
+                event: 'renewed',
+                toPlan: plan.code,
+                toStatus: 'active',
+                note: 'System Sync: Subscription renewed.'
+              },
+              session
+            );
+          }
+        }
+
+        await organizationRepository.update(
+          organizationId,
+          {
+            "subscription.status": "active",
+            cachedPlan: plan.code,
+            cachedLimits: plan.limits
+          },
+          session
+        );
+
         await session.commitTransaction();
-        return { status: 'success', message: `Successfully matched execution profile for event: ${eventType}` };
+        return { status: 'success', message: 'Subscription synced as active. Limits upgraded.' };
       }
+
+      // FLOW C: STILL PENDING
+      await session.abortTransaction();
+      return { status: 'pending', message: `Subscription is currently ${rzpSub.status}. Waiting for payment clearance.` };
+      
     } catch (error) {
       await session.abortTransaction();
-      console.error('[CRITICAL_WEBHOOK_TRANSACTION_ABORT]', error);
-      throw new AppError('Billing webhook atomic transaction tracking failure.', 500);
+      throw new AppError('Failed to synchronize subscription with Razorpay.', 500);
     } finally {
       session.endSession();
     }

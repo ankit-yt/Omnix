@@ -5,70 +5,130 @@ import {
   MessageSquare, ArrowRight, ExternalLink, Bot, User as UserIcon, AlertTriangle 
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { workspaceService } from "@/services/workspace.service";
+import { chatService } from "@/services/chat.service";
 
-// Mock data: In production, fetch this from your /api/workspaces endpoint
-const MOCK_WORKSPACES = [
-  { id: "ws_1", name: "Avon Express ERP", erpUrl: "https://avonexpress.com/admin" },
-  { id: "ws_2", name: "PCTE Internal Tools", erpUrl: "https://pcte.edu.in/portal" },
-];
+import { toast } from "sonner";
 
-// Mock chat history
-const INITIAL_CHAT = [
-  { id: 1, role: "ai", content: "Hello! I am your Omnix Copilot. I have loaded 12 documents from the Avon Express Knowledge Base. How can I help you today?" },
-];
+type Message = {
+  id: string | number;
+  role: "user" | "ai";
+  content: string;
+};
 
 export default function ChatPage() {
   const user = useAuthStore((state) => state.user);
-  const [activeWorkspace, setActiveWorkspace] = useState(MOCK_WORKSPACES[0].id);
+  
+  // State
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [messages, setMessages] = useState(INITIAL_CHAT);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null); // Crucial for threading
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the bottom when new messages arrive
+  // Fetch Workspaces on mount
+  useEffect(() => {
+    const fetchWorkspaces = async () => {
+      try {
+        const data = await workspaceService.getWorkspaces();
+        setWorkspaces(data);
+        if (data.length > 0) {
+          setActiveWorkspaceId(data[0]._id);
+        }
+      } catch (error) {
+        toast.error("Failed to load workspaces.");
+      }
+    };
+    fetchWorkspaces();
+  }, []);
+
+  // Initialize Chat greeting when workspace changes
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    const ws = workspaces.find(w => w._id === activeWorkspaceId);
+    
+    setMessages([
+      { 
+        id: "init", 
+        role: "ai", 
+        content: `Hello ${user?.name || ''}! I am the Copilot for ${ws?.name || 'this workspace'}. I have access to your uploaded knowledge base. How can I help you today?` 
+      }
+    ]);
+    setSessionId(null); // Reset session on workspace change
+  }, [activeWorkspaceId, workspaces, user]);
+
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || !activeWorkspaceId) return;
 
-    // 1. Add user message to UI
-    const newUserMsg = { id: Date.now(), role: "user", content: prompt };
+    const userMessageContent = prompt;
+    
+    // 1. Add user message to UI immediately
+    const newUserMsg: Message = { id: Date.now(), role: "user", content: userMessageContent };
     setMessages((prev) => [...prev, newUserMsg]);
     setPrompt("");
     setIsTyping(true);
 
-    // 2. TODO: Hit your backend POST /api/chat endpoint here
-    // Example: await api.post('/chat', { workspaceId: activeWorkspace, message: prompt });
+    try {
+      // 2. Hit your backend POST /api/chat/message endpoint
+      const response = await chatService.sendMessage({
+        workspaceId: activeWorkspaceId,
+        content: userMessageContent,
+        sessionId: sessionId // Send null on first message, actual ID on subsequent ones
+      });
+      console.log(response)
+      // 3. Save the sessionId returned by the backend so the conversation continues
+      if (!sessionId && response.sessionId) {
+        setSessionId(response.sessionId);
+      }
 
-    // 3. Mock AI Response Delay
-    setTimeout(() => {
+      // 4. Add AI response to UI
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, role: "ai", content: "Based on the shipping logistics manual, standard ground delivery takes 3-5 business days. Would you like me to draft an email to the customer regarding this SLA?" }
+        { 
+          id: response.messageId, 
+          role: "ai", 
+          content: response.answer 
+        }
       ]);
+
+      // Optional: Log sources used for debugging
+      if (response.sourcesUsed === 0) {
+        toast("No exact documents matched, AI used generic reasoning.", { icon: "ℹ️" });
+      }
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to get response from AI.");
+      // Remove the optimistic user message or show an error state
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleLaunchERP = () => {
-    const workspace = MOCK_WORKSPACES.find(w => w.id === activeWorkspace);
+    const workspace = workspaces.find(w => w._id === activeWorkspaceId);
     if (!workspace) return;
 
-    // THE MAGIC HANDOFF: 
-    // We append the auth flag and workspace ID to the target ERP url.
-    // Your Chrome Extension background script listens for this exact pattern to inject the React widget.
-    const targetUrl = new URL(workspace.erpUrl);
-    targetUrl.searchParams.set("omnix_auth", "true");
-    targetUrl.searchParams.set("workspace_id", workspace.id);
+    // Fallback URL if your schema doesn't have an erpUrl yet
+    const rawUrl = workspace.erpUrl || "https://example-erp.com";
     
-    // Optional: Pass a short-lived token if your extension needs to authenticate silently
-    // targetUrl.searchParams.set("session_token", "temp_token_here");
-
-    window.open(targetUrl.toString(), "_blank");
+    try {
+      const targetUrl = new URL(rawUrl);
+      targetUrl.searchParams.set("omnix_auth", "true");
+      targetUrl.searchParams.set("workspace_id", workspace._id);
+      window.open(targetUrl.toString(), "_blank");
+    } catch (e) {
+      toast.error("Invalid ERP URL configured for this workspace.");
+    }
   };
 
   return (
@@ -84,23 +144,23 @@ export default function ChatPage() {
           <div>
             <h1 className="text-sm font-medium text-white">Copilot Engine</h1>
             
-            {/* Minimal Workspace Dropdown */}
             <select 
-              value={activeWorkspace}
-              onChange={(e) => setActiveWorkspace(e.target.value)}
-              className="mt-0.5 appearance-none bg-transparent text-xs text-white/50 outline-none hover:text-white transition-colors cursor-pointer [&>option]:bg-[#0a0d16]"
+              value={activeWorkspaceId}
+              onChange={(e) => setActiveWorkspaceId(e.target.value)}
+              disabled={workspaces.length === 0}
+              className="mt-0.5 appearance-none bg-transparent text-xs text-white/50 outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50 [&>option]:bg-[#0a0d16]"
             >
-              {MOCK_WORKSPACES.map(ws => (
-                <option key={ws.id} value={ws.id}>{ws.name}</option>
+              {workspaces.length === 0 && <option value="">Loading workspaces...</option>}
+              {workspaces.map(ws => (
+                <option key={ws._id} value={ws._id}>{ws.name}</option>
               ))}
             </select>
           </div>
         </div>
         
-        {/* The Extension Injection Button */}
         <button 
           onClick={handleLaunchERP}
-          className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-white/30 active:scale-95"
+          className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-white/30 active:scale-95 disabled:opacity-50"
         >
           <span>Launch ERP Copilot</span>
           <ExternalLink className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -115,13 +175,11 @@ export default function ChatPage() {
           {messages.map((msg) => (
             <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
               
-              {/* Avatar */}
               <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ${msg.role === "user" ? "bg-white/10 ring-white/20" : "bg-gradient-to-br from-blue-500/20 to-purple-500/20 ring-white/10"}`}>
                 {msg.role === "user" ? <UserIcon className="h-4 w-4 text-white" /> : <Bot className="h-4 w-4 text-white" />}
               </div>
               
-              {/* Message Bubble */}
-              <div className={`max-w-[80%] rounded-2xl p-4 text-[14px] leading-relaxed ${
+              <div className={`max-w-[80%] rounded-2xl p-4 text-[14px] leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user" 
                   ? "bg-white/10 text-white shadow-sm ring-1 ring-white/20" 
                   : "bg-white/[0.03] text-white/90 ring-1 ring-white/10 backdrop-blur-md"
@@ -148,7 +206,6 @@ export default function ChatPage() {
             </div>
           )}
           
-          {/* Invisible div to snap scroll to bottom */}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -163,13 +220,13 @@ export default function ChatPage() {
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={`Message Copilot in ${MOCK_WORKSPACES.find(w => w.id === activeWorkspace)?.name}...`}
+            placeholder={workspaces.length > 0 ? "Ask a question about your documents..." : "Loading workspaces..."}
             className="w-full bg-transparent px-4 py-3 text-[14px] text-white placeholder-white/30 outline-none"
-            disabled={isTyping}
+            disabled={isTyping || workspaces.length === 0}
           />
           <button 
             type="submit"
-            disabled={!prompt.trim() || isTyping}
+            disabled={!prompt.trim() || isTyping || workspaces.length === 0}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-black transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
           >
             <ArrowRight className="h-4 w-4" />

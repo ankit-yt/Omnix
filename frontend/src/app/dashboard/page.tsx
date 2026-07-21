@@ -72,7 +72,7 @@ export default function DashboardLandingPage() {
           <MetricCard 
             icon={<LayoutGrid className="h-5 w-5" />}
             title="Active Workspaces" 
-            used={cachedUsage.totalWorkSpaces} 
+            used={cachedUsage.totalWorkspaces} 
             total={cachedLimits.maxWorkspaces} 
             label="Workspaces Allowed"
           />

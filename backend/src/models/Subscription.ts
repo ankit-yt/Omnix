@@ -2,17 +2,17 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ISubscriptionHistory {
   event:
-    | 'activated'
-    | 'renewed'
-    | 'upgraded'
-    | 'cancelled'
-    | 'past_due'
-    | 'expired';
+  | 'activated'
+  | 'renewed'
+  | 'upgraded'
+  | 'cancelled'
+  | 'past_due'
+  | 'expired';
   fromPlan?: string;
   toPlan: string;
   fromStatus?: string;
   toStatus: string;
-  paymentOrder?: mongoose.Types.ObjectId;
+  SubscriptionOrder?: mongoose.Types.ObjectId;
   occurredAt?: Date;
   note?: string;
 }
@@ -20,10 +20,10 @@ export interface ISubscriptionHistory {
 export interface ISubscription {
   _id?: mongoose.Types.ObjectId;
   organization: mongoose.Types.ObjectId;
-  plan: string; 
+  plan: string;
   status: 'active' | 'past_due' | 'cancelled' | 'expired';
-  currentPeriodStarts?: Date; 
-  currentPeriodEnds?: Date; 
+  currentPeriodStarts?: Date;
+  currentPeriodEnds?: Date;
   razorPaySubscriptionId: string;
   lockedLimits: {
     messagesPerMonth: number;
@@ -40,7 +40,7 @@ export interface ISubscription {
   updatedAt: Date;
 }
 
-export interface ISubscriptionDoc extends Omit<ISubscription, '_id'>, Document {}
+export interface ISubscriptionDoc extends Omit<ISubscription, '_id'>, Document { }
 
 const subscriptionSchema = new Schema<ISubscriptionDoc>({
   organization: {
@@ -49,7 +49,7 @@ const subscriptionSchema = new Schema<ISubscriptionDoc>({
     required: true
   },
   plan: {
-    type: String, 
+    type: String,
     required: true,
     default: 'free'
   },
@@ -79,17 +79,17 @@ const subscriptionSchema = new Schema<ISubscriptionDoc>({
     toPlan: { type: String, default: '' },
     fromStatus: { type: String, default: '' },
     toStatus: { type: String, default: '' },
-    paymentOrder: { type: Schema.Types.ObjectId, ref: 'PaymentOrder' },
+    SubscriptionOrder: { type: Schema.Types.ObjectId, ref: 'SubscriptionOrder' },
     occurredAt: { type: Date, default: Date.now },
     note: { type: String, default: '' }
   }],
   payments: [{
     type: Schema.Types.ObjectId,
-    ref: 'PaymentOrder'
+    ref: 'SubscriptionOrder'
   }],
   lastPayment: {
     type: Schema.Types.ObjectId,
-    ref: 'PaymentOrder'
+    ref: 'SubscriptionOrder'
   },
   cancelledAt: {
     type: Date,

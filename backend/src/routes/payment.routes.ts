@@ -1,5 +1,7 @@
-import { createCheckout, handleWebHook } from '@/controllers/payment.controller.js';
+import { createCheckout, handleWebHook, syncRazorpaySubscription } from '@/controllers/payment.controller.js';
 import { authenticate } from '@/middleware/authenticate.js';
+import { validate } from '@/middleware/validate.js';
+import { syncRazorpaySubscriptionSchema } from '@/validators/payment.validator.js';
 import {Router} from 'express';
 import express from 'express';
 
@@ -18,5 +20,6 @@ router.post(
 router.use(authenticate);
 
 router.post('/checkout',createCheckout);
+router.post('/sync',validate(syncRazorpaySubscriptionSchema) , syncRazorpaySubscription)
 
 export default router; 

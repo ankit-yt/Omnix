@@ -2,17 +2,17 @@ import { api } from "@/lib/api"
 
 export const documentService = {
   upload: async(formData: FormData)=>{
-    const {data} = await api.post('/document/upload',formData,{
+    const response = await api.post('/documents/upload',formData,{
       headers:{
         'Content-Type':'multipart/form-data',
       },
     });
-    return data;
+    return response.data;
   },
 
   getDocuments: async(workspaceId?:string)=>{
-    const url = workspaceId ? `/document?workspaceId=${workspaceId}` :'/documents';
-    const {data} = await api.get(url);
-    return data;
+    const url = workspaceId ? `/documents?workspaceId=${workspaceId}` :'/documents';
+    const response = await api.get(url);
+    return response.data.data.documents;
   }
 }

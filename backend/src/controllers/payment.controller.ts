@@ -33,3 +33,18 @@ export const handleWebHook = asyncHandler(async (req:Request, res:Response)=>{
   res.status(200).json(result);
 
 })
+
+export const syncRazorpaySubscription = asyncHandler(async (req: Request, res: Response) => {
+  const organizationId = req.user?.organization?.toString();
+  const { razorpaySubscriptionId } = req.body;
+
+  if (!organizationId) throw new AppError('Unauthorized', 401);
+  if (!razorpaySubscriptionId) throw new AppError('Missing Subscription ID', 400);
+
+  const result = await paymentService.syncRazorpaySubscription(organizationId, razorpaySubscriptionId);
+
+  res.status(200).json({
+    status: 'success',
+    message: result.message
+  });
+});
