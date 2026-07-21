@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI("AQ.Ab8RN6I61YoMoZhw-nZ6R7qXsFzqRVF_gCBa6QjC3PhEMHyUVg");
+const genAI = new GoogleGenerativeAI("Ag");
 
 async function test() {
   // @ts-ignore
