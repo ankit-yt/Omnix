@@ -10,7 +10,7 @@ export interface IKnowledgeDocument extends ISoftDelete, IAudit {
   originalFileName: string;
   fileName: string;
   fileUrl: string;
-
+  storageKey:string;
   fileSizeByte: number;
   mimeType: string;
 
@@ -43,6 +43,7 @@ const KnowledgeDocumentSchema = new Schema<IKnowledgeDocumentDoc>({
   originalFileName: { type: String, required: true, trim: true },
   fileName: { type: String, required: true, trim: true },
   fileUrl: { type: String, required: true },
+  storageKey:{type:String , required:true},
   fileSizeByte: { type: Number, required: true, min: 0 },
   mimeType: { type: String, required: true },
   status: {

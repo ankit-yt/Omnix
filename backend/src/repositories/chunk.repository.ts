@@ -8,6 +8,10 @@ class ChunkRepository {
     return await Chunk.insertMany(chunks, { session });
   }
 
+  async deleteMany(documentID:string , session?:ClientSession):Promise<void>{
+    await Chunk.deleteMany({knowledgeDocument :new mongoose.Types.ObjectId(documentID)} , {session});
+  }
+
   async findSimilarChunks(workspaceId: string, queryVector: number[], limit: number = 5): Promise<IChunkDoc[]> {
     console.log(workspaceId)
     const pipeLine = [

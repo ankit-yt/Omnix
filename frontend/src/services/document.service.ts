@@ -14,5 +14,13 @@ export const documentService = {
     const url = workspaceId ? `/documents?workspaceId=${workspaceId}` :'/documents';
     const response = await api.get(url);
     return response.data.data.documents;
+  },
+  
+  deleteDocument: async (documentId: string) => {
+    // responseType: 'blob' is CRITICAL for handling file downloads
+    const response = await api.delete(`/documents/${documentId}`, {
+      responseType: 'blob' 
+    });
+    return response; 
   }
 }

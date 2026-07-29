@@ -1,4 +1,4 @@
-import { getDocuments, uploadAndProcessDocument } from '@/controllers/document.controller.js';
+import { deleteDocument, getDocuments, uploadAndProcessDocument } from '@/controllers/document.controller.js';
 import { authenticate } from '@/middleware/authenticate.js';
 import multer from 'multer';
 import {Router} from 'express';
@@ -14,5 +14,6 @@ const upload = multer({
 router.use(authenticate);
 router.get('/', getDocuments);
 router.post('/upload',upload.single('document'), uploadAndProcessDocument);
+router.delete('/:documentId', deleteDocument)
 
 export default router;

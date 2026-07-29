@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { 
   FileText, UploadCloud, Search, MoreVertical, 
-  X, File, CheckCircle2, AlertCircle 
+  X, File, CheckCircle2, AlertCircle, Download
 } from "lucide-react";
 import { documentService } from "@/services/document.service";
-import { workspaceService } from "@/services/workspace.service"; // Ensure this is imported
-
+import { workspaceService } from "@/services/workspace.service"; 
+import { authService } from "@/services/auth.service"; // Added for user refresh
+import { useAuthStore } from "@/store/useAuthStore"; // Added for user refresh
 import { toast } from "sonner";
+
 export default function DocumentsPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   
@@ -17,17 +19,16 @@ export default function DocumentsPage() {
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const { setAuth, accessToken } = useAuthStore();
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch both simultaneously for speed
       const [fetchedWorkspaces, fetchedDocs] = await Promise.all([
         workspaceService.getWorkspaces(),
-        documentService.getDocuments() // Make sure this exists in your documentService
+        documentService.getDocuments() 
       ]);
       setWorkspaces(fetchedWorkspaces);
-      console.log(fetchedDocs)
       setDocuments(fetchedDocs);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to load knowledge base.");
@@ -40,31 +41,70 @@ export default function DocumentsPage() {
     fetchData();
   }, []);
 
-  // Client-side search filtering
   const filteredDocuments = documents.filter(doc => 
-    doc.originalFileName
-.toLowerCase().includes(searchQuery.toLowerCase())
+    (doc.fileName || doc.originalFileName || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Helper to format bytes to MB
   const formatSize = (bytes: number) => {
     if (!bytes) return "Unknown";
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
-  // Helper to resolve workspace name
   const getWorkspaceName = (workspaceId: string) => {
-    // If backend populates it
     if (typeof workspaceId === 'object' && workspaceId !== null) return (workspaceId as any).name;
-    // If it's just an ID
     const ws = workspaces.find(w => w._id === workspaceId);
     return ws ? ws.name : "Unknown Workspace";
   };
 
+  // --- NEW DELETE LOGIC ---
+  const handleDelete = async (doc: any) => {
+    const toastId = toast.loading("Deleting document and fetching backup...");
+    try {
+      const response = await documentService.deleteDocument(doc._id);
+
+      // 1. Extract filename from headers (or fallback to doc name)
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = doc.originalFileName || doc.fileName || "backup_document";
+      
+      if (contentDisposition && contentDisposition.includes('attachment')) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      // 2. Trigger browser download using the blob
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Document deleted. Backup downloaded securely.", { id: toastId });
+      
+      // 3. Refresh document list
+      fetchData();
+
+      // 4. Refresh global user state to update the usage limits on the dashboard
+      const meRes = await authService.getMe();
+      if (accessToken) {
+        setAuth(meRes.data, accessToken);
+      }
+
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete document.", { id: toastId });
+    }
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden p-8 lg:p-12">
-      
-      {/* Header */}
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-medium tracking-tight text-white">Knowledge Base</h1>
@@ -79,7 +119,6 @@ export default function DocumentsPage() {
         </button>
       </header>
 
-      {/* Toolbar */}
       <div className="mb-6 flex items-center gap-4">
         <div className="relative max-w-md flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
@@ -93,7 +132,6 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* Document List (Glass Table) */}
       <div className="flex-1 overflow-y-auto rounded-3xl bg-white/[0.02] ring-1 ring-white/[0.05] backdrop-blur-xl">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center text-white/40 text-sm">
@@ -105,13 +143,13 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <table className="w-full text-left text-sm text-white/70">
-            <thead className="sticky top-0 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md z-10">
+            <thead className="sticky top-0 z-10 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md">
               <tr>
                 <th className="px-6 py-4 font-medium text-white/40">Document Name</th>
                 <th className="px-6 py-4 font-medium text-white/40">Workspace</th>
                 <th className="px-6 py-4 font-medium text-white/40">Size</th>
                 <th className="px-6 py-4 font-medium text-white/40">Status</th>
-                <th className="px-6 py-4 font-medium text-white/40 text-right">Actions</th>
+                <th className="px-6 py-4 text-right font-medium text-white/40">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -122,11 +160,11 @@ export default function DocumentsPage() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
                         <FileText className="h-4 w-4 text-white" />
                       </div>
-                      <span className="font-medium text-white">{doc.name || doc.originalName}</span>
+                      <span className="font-medium text-white">{doc.fileName || doc.originalFileName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">{getWorkspaceName(doc.workspace || doc.workspaceId)}</td>
-                  <td className="px-6 py-4">{formatSize(doc.size)}</td>
+                  <td className="px-6 py-4">{formatSize(doc.fileSizeByte)}</td>
                   <td className="px-6 py-4">
                     {doc.status === 'ready' || doc.status === 'embedded' ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
@@ -144,13 +182,11 @@ export default function DocumentsPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={() => {
-                        // TODO: Implement Delete
-                        toast.error("Delete not implemented yet");
-                      }}
-                      className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                      onClick={() => handleDelete(doc)}
+                      title="Delete & Download Backup"
+                      className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
                     >
-                      <MoreVertical className="h-4 w-4" />
+                      <Download className="h-4 w-4" /> {/* Swap icon to indicate download feature */}
                     </button>
                   </td>
                 </tr>
@@ -160,20 +196,26 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* The Upload Modal */}
       {isUploadModalOpen && (
         <UploadModal 
           workspaces={workspaces}
           onClose={() => setIsUploadModalOpen(false)} 
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsUploadModalOpen(false);
-            fetchData(); // Refresh the list after upload!
+            fetchData();
+            
+            // Refresh user limits after upload
+            const meRes = await authService.getMe();
+            if (accessToken) {
+              setAuth(meRes.data, accessToken);
+            }
           }}
         />
       )}
     </div>
   );
 }
+
 
 // --- Upload Modal Sub-Component ---
 function UploadModal({ 

@@ -36,7 +36,7 @@ export default function LoginPage() {
       router.push(callbackUrl ?? "/dashboard");
 
     } catch (error:any) {
-      console.error("Login failed", error.response.data);
+      console.error("Login failed", error.response);
       setErrorMessage(
       error.response?.data?.message || "Invalid email or password."
     );

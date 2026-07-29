@@ -1,4 +1,4 @@
-import { ClientSession } from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { Message } from '@/models/base/index.js';
 import { IMessage, IMessageDoc } from '@/models/base/types.js';
 
@@ -9,12 +9,19 @@ class MessageRepository{
     return message;
   };
 
-  async findBySession(sessionId:string, limit:number = 10):Promise<IMessage[]>{
+  async findBySession(sessionId:string, limit:number = 50):Promise<IMessage[]>{
     return await Message.find({session:sessionId})
-      .sort({createdAt:-1})
-      .limit(limit)
+      .sort({createdAt:1})
+      .limit(50)
       .lean();
   }
+
+  async findRecentBySession(sessionId: string | mongoose.Types.ObjectId, limit: number = 8): Promise<IMessage[]> {
+  return await Message.find({ session: sessionId })
+    .sort({ createdAt: -1 }) 
+    .limit(limit)
+    .lean();
+}
 
 }
 

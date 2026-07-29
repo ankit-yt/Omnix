@@ -3,12 +3,16 @@ import { RegisterInput } from "@/types/auth.types";
 
 export const authService = {
   login: async(credentials:{email:string, password:string})=>{
-    const response = await api.post('/auth/login',credentials);
+    const response = await api.post('/auth/login',credentials , {
+      withCredentials:true
+    });
     return response.data;
   },
 
   register: async(data:RegisterInput)=>{
-    const response = await api.post('/auth/register',data);
+    const response = await api.post('/auth/register',data , {
+      withCredentials : true
+    });
     return response.data;
   },
 
@@ -18,12 +22,16 @@ export const authService = {
   },
 
   logout: async()=>{
-    const response = await api.post('/auth/logout');
+    const response = await api.post('/auth/logout' , {} , {
+      withCredentials:true
+    });
     return response.data;
   },
 
   refresh: async () => {
-  const response = await api.post("/auth/refresh");
+  const response = await api.post("/auth/refresh",{},{
+    withCredentials:true
+  });
   return response.data;
 }
 }

@@ -15,7 +15,7 @@ const router = Router();
 //   message:{status:"fail",message:"Too many login attempts. Please try again later."}
 // })
 
-router.post('/register',register);
+router.post('/register',register);  
 router.post('/login',login);
 router.post('/refresh',refresh);
 router.post('/logout',logout);

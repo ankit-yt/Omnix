@@ -13,7 +13,8 @@ export function proxy(request:NextRequest){
   );
 
   const hasRefreshToken = request.cookies.has("refreshToken");
-
+  console.log(hasRefreshToken);
+  console.log(isPublicRoute)
   if(isPublicRoute && hasRefreshToken){
     return NextResponse.redirect(new URL("/dashboard",request.url))
   };

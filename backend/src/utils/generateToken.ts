@@ -1,4 +1,5 @@
 import { IUser, IUserDoc } from '@/models/User.js'
+import AppError from '@/utils/AppError.js';
 import { Response } from 'express'
 import jwt from 'jsonwebtoken'
 
@@ -36,6 +37,15 @@ export const sendRefreshToken = (res:Response,refreshToken:string):void=>{
   })
 }
 
+export const sendLoggedInIndicator = (res: Response): void => {
+  res.cookie('is_logged_in', 'true', {
+    httpOnly: false, 
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+};
+
 export const verifyAccessToken = (token:string):JwtPayLoad=>{
   return jwt.verify(
     token,
@@ -44,8 +54,30 @@ export const verifyAccessToken = (token:string):JwtPayLoad=>{
 }
 
 export const verifyRefreshToken = (token:string):{userId:string}=>{
-  return jwt.verify(
-    token,
-    process.env.JWT_REFRESH_TOKEN as string
-  ) as {userId:string}
+ try {
+    return jwt.verify(
+      token,
+      process.env.JWT_REFRESH_TOKEN as string
+    ) as { userId: string };
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      throw new AppError('Your session has expired. Please log in again.', 401);
+    }
+    
+    throw new AppError('Invalid refresh token. Please log in again.', 401);
+  }
+}
+
+export const clearAuthCookie = (res:Response):void=>{
+  res.clearCookie('refreshToken',{
+    httpOnly:true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  })
+
+  res.clearCookie('is_logged_in',{
+     httpOnly:true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  })
 }

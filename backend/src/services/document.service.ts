@@ -3,10 +3,11 @@ import organizationRepository from "@/repositories/organization.repository.js";
 import workspaceRepository from "@/repositories/workspace.repository.js"
 import AppError from "@/utils/AppError.js";
 import mongoose from "mongoose";
-import { IChunk } from '@/models/base/types.js'
+import { IChunk, IKnowledgeDocumentDoc } from '@/models/base/types.js'
 import chunkRepository from "@/repositories/chunk.repository.js";
 import aiService from "@/services/ai.service.js";
 import { logger } from '@/utils/logger.js';
+import { storageService } from "@/services/storage.service.js";
 
 class DocumentService {
 
@@ -99,11 +100,15 @@ class DocumentService {
     workspaceId: string,
     organizationId: string,
     userId: string,
+    fileBuffer: Buffer,
     rawText: string,
     fileName: string,
     mimeType: string = 'text/plain',
-    fileSizeByte?: number) {
-    const sizeInBytes = fileSizeByte || Buffer.byteLength(rawText, 'utf8')
+    fileSizeByte?: number
+  ): Promise<IKnowledgeDocumentDoc> {
+
+    const sizeInBytes = fileSizeByte || Buffer.byteLength(rawText, 'utf8');
+    const uploadSizeMB = sizeInBytes / (1024 * 1024);
 
     const workspace = await workspaceRepository.findById(workspaceId);
 
@@ -112,53 +117,143 @@ class DocumentService {
     }
 
     if (!workspace.isActive) {
-      throw new AppError('Workspace is archived or inactive. Cannot upload documents.', 400);
+      throw new AppError(
+        'Workspace is archived or inactive. Cannot upload documents.',
+        400
+      );
     }
 
     const organization = await organizationRepository.findById(organizationId);
 
     if (!organization || !organization.cachedLimits) {
-      throw new AppError('System error: Billing limits not configured for this organization.', 500);
+      throw new AppError(
+        'System error: Billing limits not configured for this organization.',
+        500
+      );
     }
 
-    const uploadSizeMB = sizeInBytes / (1024 * 1024);
-    const maxAllowedMB = organization.cachedLimits.knowledgeBaseSizeMB;
+    const currentUsageMB =
+      organization.cachedUsage.usedKnowledgeBaseSizeMB || 0;
 
-    if (uploadSizeMB > maxAllowedMB) {
-      throw new AppError(`Upload exceeds plan limits. Maximum allowed is ${maxAllowedMB} MB.`, 429);
+    const maxAllowedMB =
+      organization.cachedLimits.knowledgeBaseSizeMB;
+
+    if (currentUsageMB + uploadSizeMB > maxAllowedMB) {
+      throw new AppError(
+        `Upload exceeds plan limits. Current usage: ${currentUsageMB.toFixed(
+          2
+        )} MB, Allowed: ${maxAllowedMB} MB.`,
+        429
+      );
     }
 
-    const document = await knowledgeDocumentRepository.create({
-      organization: new mongoose.Types.ObjectId(organizationId),
-      workspace: new mongoose.Types.ObjectId(workspaceId),
-      uploadedBy: new mongoose.Types.ObjectId(userId),
-      originalFileName: fileName,
-      fileName: fileName,
-      fileUrl: 'raw-text-upload',
-      fileSizeByte: sizeInBytes,
-      mimeType: mimeType,
-      status: 'processing'
-    });
+    const { fileUrl, storageKey } = await storageService.uploadDocument(
+      fileBuffer,
+      fileName,
+      workspaceId,
+      mimeType
+    );
 
-    this._processDocument(document._id.toString(), workspaceId, organizationId, rawText)
-      .catch(err => logger.error(`[CRITICAL] Background worker failed for document ${document._id}:`, err));
+    const session = await mongoose.startSession();
+    let document: IKnowledgeDocumentDoc | undefined;
 
-    return document;
+    try {
+      await session.withTransaction(async () => {
+        document = await knowledgeDocumentRepository.create(
+          {
+            organization: new mongoose.Types.ObjectId(organizationId),
+            workspace: new mongoose.Types.ObjectId(workspaceId),
+            uploadedBy: new mongoose.Types.ObjectId(userId),
+            originalFileName: fileName,
+            fileName,
+            fileUrl,
+            storageKey,
+            fileSizeByte: sizeInBytes,
+            mimeType,
+            status: 'processing',
+          },
+          session
+        );
 
+        await organizationRepository.updateDocumentSize(
+          organizationId,
+          uploadSizeMB,
+          session
+        )
+      });
 
+      if (!document) {
+        throw new Error('Document creation failed.');
+      }
+
+      this._processDocument(
+        document._id.toString(),
+        workspaceId,
+        organizationId,
+        rawText
+      ).catch((err) =>
+        logger.error(
+          `[CRITICAL] Background worker failed for document ${document!._id}:`,
+          err
+        )
+      );
+
+      return document;
+    } finally {
+      await session.endSession();
+    }
   }
 
-  async getDocuments(organizationId:string , workspaceId?:string){
+  async getDocuments(organizationId: string, workspaceId?: string) {
     if (!organizationId) {
       throw new AppError('Organization context missing.', 401);
     }
-    
+
     const documents = await knowledgeDocumentRepository.findByOrganization(
-      organizationId, 
+      organizationId,
       workspaceId
     );
 
     return documents;
+  }
+
+  async deleteAndRetrieveDocument(documentId:string , organizationId:string){
+    const document = await knowledgeDocumentRepository.findById(documentId);
+
+    if(!document || document.organization.toString() != organizationId){
+      throw new AppError('Document not found or unauthorized.', 404);
+    }
+
+    const fileBuffer = await storageService.downloadDocument(document.storageKey);
+    const documentSizeMB = document.fileSizeByte / (1024 * 1024);
+    const session = await mongoose.startSession();
+
+    try{
+      await session.withTransaction(async ()=>{
+        await chunkRepository.deleteMany(documentId , session);
+
+        await knowledgeDocumentRepository.delete(documentId, session);
+
+        await organizationRepository.updateDocumentSize(organizationId , documentSizeMB , session)
+      })
+    }catch(dbError){
+      logger.error(`[CRITICAL_DB_ERROR] Failed to delete document ${documentId}:`, dbError);
+      throw new AppError('Database error occurred during deletion.', 500);
+    }finally{
+      await session.endSession();
+    }
+
+    try {
+      await storageService.deleteDocument(document.storageKey);
+    } catch (storageError) {
+      logger.error(`[ORPHAN_FILE_WARNING] Failed to delete ${document.storageKey} from S3.`, storageError);
+    }
+
+    return {
+      buffer: fileBuffer,
+      fileName: document.originalFileName || document.fileName,
+      mimeType: document.mimeType
+    };
   }
 
 }

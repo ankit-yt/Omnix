@@ -1,5 +1,7 @@
 import AppError from '@/utils/AppError.js';
+import { clearAuthCookie } from '@/utils/generateToken.js';
 import {NextFunction, Response , Request  , ErrorRequestHandler} from 'express'
+import { error } from 'winston';
 
 const handleDuplicateKeyError = (err:any):AppError =>{
   const field = Object.keys(err.keyValue)[0];
@@ -58,12 +60,23 @@ const sendProdError = (err:AppError , res:Response):void=>{
 const errorHandler: ErrorRequestHandler = (err:any , req:Request , res:Response , next:NextFunction):void=>{
   err.statusCode = err.statusCode || 500
   err.status = err.status || 'error'
+  if (err.name === "TokenExpiredError") {
+  err = new AppError("Access token expired.", 401);
+}
+
+if (err.name === "JsonWebTokenError") {
+  err = new AppError("Invalid access token.", 401);
+}
+
+  if(err.statusCode === 401){
+    clearAuthCookie(res);
+  }
 
   if(process.env.NODE_ENV == 'development'){
     sendDevError(err , res)
   }else{
     let error = err
-     if (err.code === 11000) error = handleDuplicateKeyError(error)
+    if (err.code === 11000) error = handleDuplicateKeyError(error)
     if (err.name === 'ValidationError') error = handleValidationError(error)
     if (err.name === 'CastError') error = handleCastError(error)
     if (err.name === 'TokenExpiredError') error = handleJWTExpiredError()

@@ -50,6 +50,7 @@ export const uploadAndProcessDocument = asyncHandler(async(req:Request , res:Res
     workspaceId,
     organizationId,
     userId,
+    file.buffer,
     rawText,
     file.originalname, 
     file.mimetype,     
@@ -81,4 +82,26 @@ export const getDocuments = asyncHandler(async (req: Request, res: Response) => 
     results: documents.length,
     data: { documents } 
   });
+});
+
+export const deleteDocument = asyncHandler(async (req: Request, res: Response) => {
+  const { documentId } = req.params;
+  const organizationId = req.user?.organization?.toString();
+
+  if (!organizationId) {
+    throw new AppError('Unauthorized: User token context missing', 401);
+  }
+
+  // This will throw if the download fails, preventing the DB deletion
+  const { buffer, fileName, mimeType } = await documentService.deleteAndRetrieveDocument(
+    documentId as string, 
+    organizationId
+  ); 
+
+  // Send the file back as an attachment
+  res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('Content-Length', buffer.length);
+  
+  res.status(200).send(buffer);
 });

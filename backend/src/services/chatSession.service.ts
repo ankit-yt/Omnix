@@ -1,10 +1,11 @@
 import { IChatSession } from "@/models/ChatSession.js";
 import chatSessionRepository from "@/repositories/chatSession.repository.js";
+import messageRepository from "@/repositories/message.repository.js";
 import workspaceRepository from "@/repositories/workspace.repository.js";
 import { PaginationResult } from "@/types/pagination.types.js";
 import AppError from "@/utils/AppError.js";
 
-class ChatSessionServce{
+class ChatSessionService{
 
   async getWorkspaceSessions(
     organizationId:string,
@@ -39,6 +40,20 @@ class ChatSessionServce{
     };
   }
 
+  async getSessionMessages(organizationId: string, sessionId: string) {
+    // 1. Verify the session exists and belongs to the correct organization
+    const session = await chatSessionRepository.findById(sessionId);
+    
+    if (!session || session.organization.toString() !== organizationId) {
+      throw new AppError("Chat session not found or access denied.", 404);
+    }
+
+    // 2. Fetch all messages for this session from the database
+    const messages = await messageRepository.findBySession(sessionId);
+    
+    return messages;
+  }
+
 }
 
-export default new ChatSessionServce();
+export default new ChatSessionService();

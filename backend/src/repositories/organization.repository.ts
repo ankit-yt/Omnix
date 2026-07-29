@@ -4,7 +4,7 @@ import { ClientSession, UpdateQuery } from "mongoose";
 class OrganizationRepository{
 
   async findById(organizationId:string):Promise<IOrganization | null>{
-    return Organization.findById(organizationId).select('cachedLimits').lean();
+    return Organization.findById(organizationId).select('cachedLimits cachedUsage').lean();
   }
 
   async findByWebsite(website:string):Promise<IOrganization | null>{
@@ -36,10 +36,12 @@ class OrganizationRepository{
     );
   }
 
+  //Increment by one
   async incrementWorkspaceCount(orgId:string , session?:ClientSession):Promise<void>{
     await Organization.updateOne({_id:orgId},{$inc:{"cachedUsage.totalWorkspaces":1},},{session});
   }
 
+  //Incement/Decremnt by dynamic amount
   async updateWorkspaceCount(organizationId:string , amount:number , session?:ClientSession):Promise<void>{
     await Organization.updateOne(
       { _id:organizationId },
@@ -48,6 +50,44 @@ class OrganizationRepository{
           },
       },{session}
   );
+  }
+
+  async updateDocumentSize(organizationId:string , amount:number , session?:ClientSession):Promise<void>{
+    await Organization.updateOne(
+      {_id:organizationId},
+      {
+        $inc:{'cachedUsage.usedKnowledgeBaseSizeMB':amount}
+      },{
+        session
+      }
+    );
+  }
+ 
+  //Record a message being sent
+  async recordMessageUsage(organizationId: string, session?: ClientSession): Promise<void> {
+    await Organization.findByIdAndUpdate(
+      organizationId,
+      {
+        $inc: {
+          'cachedUsage.messagesThisMonth': 1,
+          'cachedUsage.totalMessages': 1
+        }
+      },
+      { session }
+    );
+  }
+
+  // One-time flag update for onboarding
+  async markFirstMessageCompleted(organizationId: string, session?: ClientSession): Promise<void> {
+    await Organization.findByIdAndUpdate(
+      organizationId,
+      {
+        $set: {
+          'onboardingStatus.firstSuccessfulMessage': true
+        }
+      },
+      { session }
+    );
   }
 }
 

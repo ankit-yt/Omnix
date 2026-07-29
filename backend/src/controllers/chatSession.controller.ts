@@ -27,3 +27,26 @@ export const getChatSessions = asyncHandler(async(req:Request , res:Response)=>{
   })
 
 })
+
+export const getSessionMessages = asyncHandler(async (req: Request, res: Response) => {
+  const organizationId = req.user?.organization?.toString();
+  if (!organizationId) {
+    throw new AppError("Unauthorized context missing.", 401);
+  }
+
+  const { sessionId } = req.params;
+  
+  if (!sessionId) {
+    throw new AppError("Missing required parameter: sessionId", 400);
+  }
+
+  const messages = await chatSessionService.getSessionMessages(
+    organizationId, 
+    sessionId as string
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: messages
+  });
+});

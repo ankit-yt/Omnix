@@ -25,5 +25,17 @@ export const chatService = {
     const response = await api.post('/chat/message', data);
     return response.data.data; 
     // Returns: { messageId, sessionId, answer, sourcesUsed }
+  },
+
+  getSessions: async(workspaceId:string , page= 1 , limit = 20)=>{
+    const response = await api.get(`/chatSessions`,{
+      params:{workspaceId, page, limit}
+    });
+    return response.data;
+  },
+
+  getSessionMessages : async(sessionId:string)=>{
+    const response = await api.get(`/chatSessions/${sessionId}/messages`);
+    return response.data;
   }
 };

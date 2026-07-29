@@ -57,6 +57,20 @@ class WorkspaceRepository {
     return Workspace.findOne(filter).lean();
   }
 
+  // Record a message usage for the workspace
+  async recordMessageUsage(workspaceId: string, session?: mongoose.ClientSession): Promise<void> {
+    await Workspace.findByIdAndUpdate(
+      workspaceId,
+      {
+        $inc: {
+          'usage.messagesThisMonth': 1,
+          'usage.totalMessages': 1
+        }
+      },
+      { session }
+    );
+  }
+
 }
 
 export default new WorkspaceRepository()
