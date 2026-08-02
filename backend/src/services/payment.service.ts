@@ -100,7 +100,7 @@ class PaymentService {
     }
 
     const rzpSubId = payload.payload.subscription.entity.id;
-    
+
     const result = await this.syncRazorpaySubscription(rzpSubId);
     return result;
   }
@@ -111,22 +111,20 @@ class PaymentService {
     try {
       // 1. Ask Razorpay for the absolute real-world status
       const rzpSub = await this.razorpay.subscriptions.fetch(rzpSubscriptionId);
-      
+
       // 2. Resolve the Organization ID directly from our database (crucial for webhooks)
       let organizationId: string;
       let subscriptionOrder = await paymentOrderRepository.findByrazorpaySubscriptionId(rzpSubscriptionId);
-      let dbSubscription = await mongoose.model('Subscription').findOne({ razorPaySubscriptionId: rzpSubscriptionId });
+
 
       if (subscriptionOrder) {
         organizationId = subscriptionOrder.organizationId.toString();
-      } else if (dbSubscription) {
-        organizationId = dbSubscription.organization.toString();
-      } else {
+      }  else {
         throw new AppError(`No internal mapping found for Razorpay Subscription: ${rzpSubscriptionId}`, 404);
       }
 
       // Fetch the actual DB Subscription now that we know the Org ID
-      dbSubscription = await subscriptionRepository.findByOrganization(organizationId);
+      let dbSubscription = await subscriptionRepository.findByOrganization(organizationId);
 
       // FLOW A: CANCELLED OR HALTED 
       if (rzpSub.status === 'cancelled' || rzpSub.status === 'halted') {
@@ -137,7 +135,7 @@ class PaymentService {
             toPlan: 'free',
             toStatus: 'cancelled',
             note: 'System Sync: Subscription found cancelled in Razorpay.'
-          },session); 
+          }, session);
 
           const freePlan = await planRepository.findByCode('free');
           if (freePlan) {
@@ -158,7 +156,7 @@ class PaymentService {
 
       // FLOW B: ACTIVE OR AUTHENTICATED 
       if (rzpSub.status === 'active' || rzpSub.status === 'authenticated') {
-        
+
         if (subscriptionOrder && subscriptionOrder.status !== 'success') {
           await paymentOrderRepository.updatePaymentState(
             subscriptionOrder._id,
@@ -170,7 +168,8 @@ class PaymentService {
         const plan = await planRepository.findByRazorpayPlanId(rzpSub.plan_id.toString());
         if (!plan) throw new AppError('Associated plan not found in database.', 404);
 
-        if (!dbSubscription || dbSubscription.status === 'cancelled') {
+        if (!dbSubscription) {
+          // First ever subscription
           await subscriptionRepository.create({
             organization: new mongoose.Types.ObjectId(organizationId),
             plan: plan.code,
@@ -183,10 +182,31 @@ class PaymentService {
               event: 'activated',
               toPlan: plan.code,
               toStatus: 'active',
-              note: 'System Sync: New active subscription.'
+              note: 'System Sync: First subscription activated.'
             }]
           }, session);
-        } else {
+        }
+        else if (dbSubscription.status === 'cancelled') {
+          await subscriptionRepository.reactivate(
+            dbSubscription._id!,
+            {
+              razorPaySubscriptionId: rzpSubscriptionId,
+              plan: plan.code,
+              lockedLimits: plan.limits,
+              paymentId: subscriptionOrder?._id,
+              history: {
+                event: 'reactivated',
+                fromPlan: dbSubscription.plan,
+                toPlan: plan.code,
+                fromStatus: 'cancelled',
+                toStatus: 'active',
+                note: 'System Sync: Subscription reactivated with a new Razorpay subscription.'
+              }
+            },
+            session
+          );
+        }
+        else {
           if (subscriptionOrder) {
             await subscriptionRepository.recordRenewal(
               dbSubscription._id!,
@@ -219,12 +239,32 @@ class PaymentService {
       // FLOW C: STILL PENDING
       await session.abortTransaction();
       return { status: 'pending', message: `Subscription is currently ${rzpSub.status}. Waiting for payment clearance.` };
-      
+
     } catch (error) {
       await session.abortTransaction();
       throw new AppError('Failed to synchronize subscription with Razorpay.', 500);
     } finally {
       session.endSession();
+    }
+  }
+
+  async cancelUserSubscription(organizationId: string) {
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        const dbSubscription = await subscriptionRepository.findByOrganization(organizationId);
+
+        if (!dbSubscription || !dbSubscription.razorPaySubscriptionId) {
+          throw new AppError('No active external subscription found for this organization.', 404);
+        }
+
+        if (dbSubscription.status === 'cancelled') {
+          throw new AppError('Subscription is already cancelled.', 400);
+        }
+        await this.razorpay.subscriptions.cancel(dbSubscription.razorPaySubscriptionId);
+      })
+    } catch (error: any) {
+      throw new AppError('Failed to cancel subscription with Razorpay.', 500);
     }
   }
 }

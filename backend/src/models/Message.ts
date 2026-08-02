@@ -1,6 +1,15 @@
 
 import mongoose, { Document, Schema } from 'mongoose'
 
+export type SourceType = 'file' | 'webpage';
+
+export interface ICitation {
+  document: mongoose.Types.ObjectId;
+  title: string;
+  sourceType: SourceType;
+  sourceUrl?: string | null;
+}
+
 export interface IMessage {
   session: mongoose.Types.ObjectId;
   organization: mongoose.Types.ObjectId;
@@ -16,6 +25,7 @@ export interface IMessage {
     sourceChunks: mongoose.Types.ObjectId[];
     // how many tokens this message consumed
     // user messages = 0, assistant messages = actual count
+    citations: ICitation[];
     tokensUsed: number;
     // how long did AI take to respond in milliseconds
     responseTime: number;
@@ -27,10 +37,10 @@ export interface IMessage {
     retrievalScore: number;
   }
   createdAt: Date;
-  updatedAt:Date;
+  updatedAt: Date;
 }
 
-export interface IMessageDoc extends IMessage , Document {};
+export interface IMessageDoc extends IMessage, Document { };
 
 const MessageSchema = new Schema<IMessageDoc>(
   {
@@ -46,7 +56,7 @@ const MessageSchema = new Schema<IMessageDoc>(
     },
     role: {
       type: String,
-      enum: ['user', 'assistant' , 'system'],
+      enum: ['user', 'assistant', 'system'],
       required: true,
     },
     content: {
@@ -68,6 +78,28 @@ const MessageSchema = new Schema<IMessageDoc>(
         ref: 'Chunk',
         default: [],
       },
+      citations: [
+        {
+          document: {
+            type: Schema.Types.ObjectId,
+            ref: 'KnowledgeDocument',
+            required: true,
+          },
+          title: {
+            type: String,
+            required: true,
+          },
+          sourceType: {
+            type: String,
+            enum: ['file', 'webpage'],
+            required: true,
+          },
+          sourceUrl: {
+            type: String,
+            default: null,
+          },
+        },
+      ],
       tokensUsed: {
         type: Number,
         default: 0,
@@ -92,7 +124,7 @@ const MessageSchema = new Schema<IMessageDoc>(
     timestamps: true,
     toJSON: {
       transform(doc, ret) {
-        const {__v , ...safeJson} = ret
+        const { __v, ...safeJson } = ret
         return safeJson
       },
     },
@@ -103,6 +135,6 @@ MessageSchema.index({ session: 1, createdAt: 1 })
 
 MessageSchema.index({ organization: 1, createdAt: -1 })
 
-MessageSchema.index({ organization: 1,createdAt:1, 'metadata.tokensUsed': 1 })
+MessageSchema.index({ organization: 1, createdAt: 1, 'metadata.tokensUsed': 1 })
 
 export default mongoose.model<IMessageDoc>('Message', MessageSchema)

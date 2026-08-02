@@ -8,8 +8,8 @@ class ChunkRepository {
     return await Chunk.insertMany(chunks, { session });
   }
 
-  async deleteMany(documentID:string , session?:ClientSession):Promise<void>{
-    await Chunk.deleteMany({knowledgeDocument :new mongoose.Types.ObjectId(documentID)} , {session});
+  async deleteMany(documentID: string, session?: ClientSession): Promise<void> {
+    await Chunk.deleteMany({ knowledgeDocument: new mongoose.Types.ObjectId(documentID) }, { session });
   }
 
   async findSimilarChunks(workspaceId: string, queryVector: number[], limit: number = 5): Promise<IChunkDoc[]> {
@@ -17,7 +17,7 @@ class ChunkRepository {
     const pipeLine = [
       {
         $vectorSearch: {
-          index: 'vector_index',
+          index: 'vector_index1',
           path: 'embedding',
           queryVector: queryVector,
           numCandidates: limit * 10,
@@ -26,6 +26,15 @@ class ChunkRepository {
             workspace: new mongoose.Types.ObjectId(workspaceId)
           }
         }
+      }, {
+        $lookup: {
+          from: 'knowledgedocuments',
+          localField: 'knowledgeDocument',
+          foreignField: '_id',
+          as: 'knowledgeDocument'
+        }
+      }, {
+        $unwind: "$knowledgeDocument",
       }, {
         $project: {
           embedding: 0,

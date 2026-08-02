@@ -132,3 +132,74 @@ body{
   
   background-color: black;
 }
+
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  mix-blend-mode: screen;
+  opacity: .7;
+  animation: auroraMove 2.2s ease forwards;
+}
+
+.aurora-1{
+  width:600px;
+  height:600px;
+
+  background:#4f8cff;
+
+  left:-200px;
+  top:10%;
+}
+
+.aurora-2{
+  width:500px;
+  height:500px;
+
+  background:#7c5cff;
+
+  right:-150px;
+  bottom:0;
+}
+
+.aurora-3{
+  width:450px;
+  height:450px;
+
+  background:#00d4ff;
+
+  left:35%;
+  top:25%;
+}
+
+@keyframes auroraMove{
+
+0%{
+
+opacity:0;
+
+transform:
+translateY(60px)
+scale(.6)
+rotate(-10deg);
+
+}
+
+30%{
+
+opacity:.9;
+
+}
+
+100%{
+
+opacity:0;
+
+transform:
+translateY(-120px)
+scale(1.6)
+rotate(15deg);
+
+}
+
+}

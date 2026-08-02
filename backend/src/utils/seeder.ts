@@ -33,20 +33,20 @@ export const seedSystemPlans = async():Promise<void>=>{
           code:'pro',
           displayName:'Pro Specialist',
           description:'Unlocks deeper limits, scalable workflows, and larger contextual vectors.',
-          priceInPaise:99900,
+          priceInPaise:29900,
           currency:'INR',
           sortOrder:2,
           limits:{
-            messagesPerMonth:5000,
-            knowledgeBaseSizeMB:500,
+            messagesPerMonth:1000,
+            knowledgeBaseSizeMB:200,
             teamMembers:5,
-            maxWorkspaces:10
+            maxWorkspaces:4
           },
           features:[
-            '500 MB Knowledge Base Storage',
-            '5,000 Message per month',
+            '200 MB Knowledge Base Storage',
+            '1000 Message per month',
             'Prioritized Lightning Fast Generation',
-            'Up to 10 workspaces',
+            'Up to 4 workspaces',
             'Callaborate with up to 5 team members'
           ]
         }

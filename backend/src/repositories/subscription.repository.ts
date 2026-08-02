@@ -1,10 +1,11 @@
 import { Subscription } from '@/models/base/index.js'
 import { ISubscription, ISubscriptionDoc } from '@/models/base/types.js'
 import { ISubscriptionHistory } from '@/models/Subscription.js';
-import mongoose, { ClientSession } from 'mongoose'
+import mongoose, { ClientSession, UpdateQuery } from 'mongoose'
 import { subscribe } from 'node:diagnostics_channel';
 
 class SubscriptionRepository {
+
 
   async create(data: Partial<ISubscription>, session?: ClientSession): Promise<ISubscriptionDoc> {
     const [subscription] = await Subscription.create([data], { session });
@@ -43,6 +44,29 @@ class SubscriptionRepository {
     );
   }
 
+
+  async reactivate(subscriptionId: mongoose.Types.ObjectId, data: UpdateQuery<ISubscription>, session?: ClientSession) {
+    const update: any = {
+      $set: {
+        status: "active",
+        plan: data.plan,
+        razorPaySubscriptionId: data.razorPaySubscriptionId,
+        lockedLimits: data.lockedLimits,
+        lastPayment: data.paymentId ?? null,
+      },
+      $push: {
+        history: data.history,
+      },
+    };
+
+    if (data.paymentId) {
+      update.$push.payments = data.paymentId;
+    }
+
+    return Subscription.findByIdAndUpdate(subscriptionId, update, { session });
+  }
+
+
   async cancel(
     subscriptionId: mongoose.Types.ObjectId,
     historyEntry: ISubscriptionHistory,
@@ -69,6 +93,7 @@ class SubscriptionRepository {
   async findByRazorpaySubscriptionId(razorpaySubscriptionId: mongoose.Types.ObjectId): Promise<ISubscription | null> {
     return Subscription.findById(razorpaySubscriptionId).lean();
   }
+
 }
 
 export default new SubscriptionRepository();

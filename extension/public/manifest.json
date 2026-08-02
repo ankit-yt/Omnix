@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Omnix AI Copilot",
+  "version": "1.0",
+  "description": "Enterprise AI Assistant",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": ["*://*.your-backend-api.com/*"]
+}

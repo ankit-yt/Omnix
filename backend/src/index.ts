@@ -20,6 +20,7 @@ import adminRouter from '@/routes/admin.routes.js';
 import workspaceRouter from '@/routes/workspace.routes.js';
 import billingCronService from '@/services/billingCron.service.js';
 import chatSessionRouter from '@/routes/chatSession.routes.js';
+import publicWidgetRoutes from '@/routes/publicWidget.routes.js';
 
 
 const app: Application = express()
@@ -43,10 +44,11 @@ app.use('/api/auth', authRouter);
 app.use('/api/documents', documentRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/plans', planRouter);
-app.use('/api/subscriptions', paymentRouter);
+app.use('/api/subscription', paymentRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/workspaces', workspaceRouter);
 app.use('/api/chatSessions', chatSessionRouter);
+app.use('/api/public/widget', publicWidgetRoutes);
 
 
 app.get('/health', (req: Request, res: Response) => {

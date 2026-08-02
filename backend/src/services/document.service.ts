@@ -8,6 +8,7 @@ import chunkRepository from "@/repositories/chunk.repository.js";
 import aiService from "@/services/ai.service.js";
 import { logger } from '@/utils/logger.js';
 import { storageService } from "@/services/storage.service.js";
+import { SourceType } from "@/models/Message.js";
 
 class DocumentService {
 
@@ -83,6 +84,13 @@ class DocumentService {
           },
           session
         );
+        let organization = await organizationRepository.findById(organizationId);
+        if (organization?.onboardingStatus && !organization.onboardingStatus.knowledgeBaseUploaded) { }
+        await organizationRepository.updateOnboardingStep(
+          organizationId,
+          'knowledgeBaseUploaded',
+          session
+        );
       })
     } catch (dbError: any) {
       logger.error(`[CRITICAL_DB_ERROR] Document ${documentId} rollback initiated:`, dbError);
@@ -104,6 +112,7 @@ class DocumentService {
     rawText: string,
     fileName: string,
     mimeType: string = 'text/plain',
+    sourceType:SourceType,
     fileSizeByte?: number
   ): Promise<IKnowledgeDocumentDoc> {
 
@@ -165,8 +174,9 @@ class DocumentService {
             workspace: new mongoose.Types.ObjectId(workspaceId),
             uploadedBy: new mongoose.Types.ObjectId(userId),
             originalFileName: fileName,
-            fileName,
-            fileUrl,
+            title:fileName,
+            sourceUrl:fileUrl,
+            sourceType,
             storageKey,
             fileSizeByte: sizeInBytes,
             mimeType,
@@ -217,10 +227,10 @@ class DocumentService {
     return documents;
   }
 
-  async deleteAndRetrieveDocument(documentId:string , organizationId:string){
+  async deleteAndRetrieveDocument(documentId: string, organizationId: string) {
     const document = await knowledgeDocumentRepository.findById(documentId);
 
-    if(!document || document.organization.toString() != organizationId){
+    if (!document || document.organization.toString() != organizationId) {
       throw new AppError('Document not found or unauthorized.', 404);
     }
 
@@ -228,18 +238,18 @@ class DocumentService {
     const documentSizeMB = document.fileSizeByte / (1024 * 1024);
     const session = await mongoose.startSession();
 
-    try{
-      await session.withTransaction(async ()=>{
-        await chunkRepository.deleteMany(documentId , session);
+    try {
+      await session.withTransaction(async () => {
+        await chunkRepository.deleteMany(documentId, session);
 
         await knowledgeDocumentRepository.delete(documentId, session);
 
-        await organizationRepository.updateDocumentSize(organizationId , documentSizeMB , session)
+        await organizationRepository.updateDocumentSize(organizationId, documentSizeMB, session)
       })
-    }catch(dbError){
+    } catch (dbError) {
       logger.error(`[CRITICAL_DB_ERROR] Failed to delete document ${documentId}:`, dbError);
       throw new AppError('Database error occurred during deletion.', 500);
-    }finally{
+    } finally {
       await session.endSession();
     }
 
@@ -251,7 +261,7 @@ class DocumentService {
 
     return {
       buffer: fileBuffer,
-      fileName: document.originalFileName || document.fileName,
+      fileName: document.originalFileName || document.title,
       mimeType: document.mimeType
     };
   }

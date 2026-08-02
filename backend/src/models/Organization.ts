@@ -155,23 +155,6 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
   }
 })
 
-OrganizationSchema.pre("save", function () {
-  const onboarding = this.onboardingStatus;
-
-  const isCompleted =
-    onboarding.slugConfigured &&
-    onboarding.knowledgeBaseUploaded &&
-    onboarding.firstSuccessfulMessage;
-
-  if (isCompleted && !onboarding.completedAt) {
-    onboarding.completedAt = new Date();
-  }
-
-  if (!isCompleted) {
-    onboarding.completedAt = null;
-  }
-
-})
 
 OrganizationSchema.methods.generateNewApiKey = async function () {
   const key = `erpg_${crypto.randomBytes(32).toString('hex')}`

@@ -105,24 +105,7 @@ class AuthService {
           isEmailVerified: false,
         }, session)
 
-        await subscriptionRepository.create({
-          _id: subscriptionId,
-          organization: orgId,
-          plan: 'free',
-          status: 'active',
-          lockedLimits: freePlan.limits,
-          history: [
-            {
-              event: 'activated',
-              fromPlan: '',
-              toPlan: 'free',
-              fromStatus: '',
-              toStatus: 'active',
-              occurredAt: new Date(),
-              note: 'Account registered on perpetual free plan',
-            },
-          ],
-        }, session)
+
       })
     } catch (error: any) {
       if (error.code === 11000) {

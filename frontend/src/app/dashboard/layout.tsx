@@ -36,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       try {
 
         if (isChatPage && activeWorkspaceId) {
+          setHistoryView(true)
           const res = await chatService.getSessions(activeWorkspaceId)
           setSessions(res.data.data)
           console.log(res)
@@ -45,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }
     fetchSessions();
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, activeSessionId, isChatPage, setHistoryView])
   if (!isInitialized) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -54,12 +55,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     )
   }
   return (
-    <div className="flex inset-0 bg-center h-screen w-full bg-cover overflow-hidden p-4 md:p-6"
-      style={{
-        backgroundImage: "url(https://i.pinimg.com/vwebp/1200x/f1/42/81/f14281875b7b16d18596fab170cd9b29.webp)",
-        backgroundRepeat: "no-repeat",
+    <div className="relative flex inset-0 bg-center h-screen w-full bg-cover overflow-hidden p-4 md:p-6"
+     >
+       <div
+    className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out ${
+      isChatPage ? "opacity-100" : "opacity-0"
+    }`}
+    style={{
+      backgroundImage:
+        "url(https://i.pinimg.com/736x/4c/f3/92/4cf392d02ca0f37d52a25bb6d9859f54.jpg)",
+    }}
+  />
 
-      }}>
+  <div
+    className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out ${
+      isChatPage ? "opacity-0" : "opacity-100"
+    }`}
+    style={{
+      backgroundImage:
+        "url(https://i.pinimg.com/1200x/f1/42/81/f14281875b7b16d18596fab170cd9b29.jpg)",
+    }}
+  />
 
       <aside className="hidden w-64 flex-col  justify-between rounded-[32px] bg-white/2 ring-1 ring-white/5 backdrop-blur-2xl transition-all md:flex">
 

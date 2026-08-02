@@ -17,25 +17,29 @@ import remarkGfm from "remark-gfm";
 import { useChatStore } from "@/store/useChatStore";
 import { SPRING } from "@/components/ui/formInput";
 
+type Citation = {
+  id: string;
+  title: string;
+  type: "file" | "webpage";
+  url: string | null;
+};
+
 type Message = {
   id: string | number;
   role: "user" | "ai";
   content: string;
+  citations?: Citation[];
 };
 
 export default function ChatPage() {
   const user = useAuthStore((state) => state.user);
   const { activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
   const accessToken = useAuthStore((state) => state.accessToken);
-
   const [workspaces, setWorkspaces] = useState<any[]>([]);
-  // const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null); // Crucial for threading
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
-
   const [workspaceRendered, setWorkspaceRendered] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,13 +48,12 @@ export default function ChatPage() {
 
   const openWorkspace = () => {
     setWorkspaceRendered(true);
-    // next frame so the initial (closed) styles paint before we animate to open
     requestAnimationFrame(() => setWorkspaceOpen(true));
   };
 
   const closeWorkspace = () => {
     setWorkspaceOpen(false);
-    setTimeout(() => setWorkspaceRendered(false), 400); // match transitionDuration below
+    setTimeout(() => setWorkspaceRendered(false), 400);
   };
 
   useEffect(() => {
@@ -61,12 +64,12 @@ export default function ChatPage() {
         if (data.length > 0) {
           setActiveWorkspaceId(data[0]._id);
         }
-      } catch (error) {
+      } catch {
         toast.error("Failed to load workspaces.");
       }
     };
     fetchWorkspaces();
-  }, []);
+  }, [setActiveWorkspaceId]);
 
 
 
@@ -79,26 +82,27 @@ export default function ChatPage() {
           role: "ai",
           content: `Hello ${user?.name || ''}! I am the Copilot for ${ws?.name || 'this workspace'}. How can I help you today?`
         }]);
-        setSessionId(null);
+        setActiveSessionId(null);
         return;
       }
+      console.log(activeWorkspaceId)
 
       try {
         setIsTyping(true);
-        setSessionId(activeSessionId);
 
         const history = await chatService.getSessionMessages(activeSessionId);
 
         const formattedMessages = history.data.map((msg: any) => ({
           id: msg._id,
           role: msg.role,
-          content: msg.content
+          content: msg.content,
+          citations: msg.metadata?.citations ?? []
         }));
 
         setMessages(formattedMessages);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load conversation history.");
-        setActiveSessionId(null); // Fallback to new chat on failure
+        setActiveSessionId(null);
       } finally {
         setIsTyping(false);
       }
@@ -114,22 +118,23 @@ export default function ChatPage() {
   }, [messages, isTyping]);
 
   useEffect(() => {
-  function handleClickOutside(event: MouseEvent) {
-    if (
-      workspaceRendered &&
-      workspaceRef.current &&
-      !workspaceRef.current.contains(event.target as Node)
-    ) {
-      closeWorkspace();
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        workspaceRendered &&
+        workspaceRef.current &&
+        !workspaceRef.current.contains(event.target as Node)
+      ) {
+        closeWorkspace();
+      }
     }
-  }
 
-  document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [workspaceRendered]);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [workspaceRendered]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim() || !activeWorkspaceId) return;
@@ -142,30 +147,29 @@ export default function ChatPage() {
     setPrompt("");
     setIsTyping(true);
 
+
     try {
-      // 2. Hit your backend POST /api/chat/message endpoint
+
       const response = await chatService.sendMessage({
         workspaceId: activeWorkspaceId,
         content: userMessageContent,
-        sessionId: sessionId // Send null on first message, actual ID on subsequent ones
+        sessionId: activeSessionId
       });
       console.log(response)
-      // 3. Save the sessionId returned by the backend so the conversation continues
-      if (!sessionId && response.sessionId) {
-        setSessionId(response.sessionId);
+      if (!activeSessionId && response.sessionId) {
+        setActiveSessionId(response.sessionId);
       }
 
-      // 4. Add AI response to UI
       setMessages((prev) => [
         ...prev,
         {
           id: response.messageId,
           role: "ai",
-          content: response.answer
+          content: response.answer,
+          citations: response.citations ?? []
         }
       ]);
 
-      // Optional: Log sources used for debugging
       if (response.sourcesUsed === 0) {
         toast("No exact documents matched, AI used generic reasoning.", { icon: "ℹ️" });
       }
@@ -173,7 +177,6 @@ export default function ChatPage() {
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to get response from AI.");
-      // Remove the optimistic user message or show an error state
     } finally {
       setIsTyping(false);
     }
@@ -242,6 +245,43 @@ export default function ChatPage() {
                 >
                   {msg.content}
                 </ReactMarkdown>
+                {msg.role === "ai" &&
+                  msg.citations &&
+                  msg.citations.length > 0 && (
+                    <div className="mt-4 border-t border-white/10 pt-3">
+                      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/40">
+                        Sources
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {msg.citations.map((citation) => (
+                          <div
+                            key={citation.id}
+                            className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs ring-1 ring-white/10"
+                          >
+                            <span>
+                              {citation.type === "file" ? "📄" : "🌐"}
+                            </span>
+
+                            {citation.url ? (
+                              <a
+                                href={citation.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-300 hover:text-blue-200"
+                              >
+                                {citation.title}
+                              </a>
+                            ) : (
+                              <span className="text-white/70">
+                                {citation.title}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
               </div>
 
             </div>
@@ -274,7 +314,7 @@ export default function ChatPage() {
           className="relative flex items-center rounded-full bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-2xl transition-all focus-within:bg-white/10 focus-within:ring-white/30 shadow-lg"
         >
           <div
-           className="relative">
+            className="relative">
             <button
               type="button"
               onClick={() => (workspaceRendered ? closeWorkspace() : openWorkspace())}
@@ -315,8 +355,8 @@ export default function ChatPage() {
                         closeWorkspace();
                       }}
                       className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm transition-all ${activeWorkspaceId === ws._id
-                          ? "bg-white/10 text-white ring-1 ring-white/20"
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white ring-1 ring-white/20"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                       style={{
                         opacity: workspaceOpen ? 1 : 0,

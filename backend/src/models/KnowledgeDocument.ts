@@ -2,14 +2,17 @@ import mongoose, { Document, Schema } from "mongoose";
 import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
 import { IAudit, ISoftDelete } from "@/models/base/types.js";
 
+
 export interface IKnowledgeDocument extends ISoftDelete, IAudit {
   _id?: mongoose.Types.ObjectId; 
   organization: mongoose.Types.ObjectId;
   workspace: mongoose.Types.ObjectId;
 
+  sourceType: 'file' | 'webpage';
+
   originalFileName: string;
-  fileName: string;
-  fileUrl: string;
+  title: string;
+  sourceUrl: string;
   storageKey:string;
   fileSizeByte: number;
   mimeType: string;
@@ -40,9 +43,10 @@ const KnowledgeDocumentSchema = new Schema<IKnowledgeDocumentDoc>({
     ref: 'Workspace',
     required: true
   },
+  sourceType:{type:String , enum:['file', 'webpage'] , required: true,},
   originalFileName: { type: String, required: true, trim: true },
-  fileName: { type: String, required: true, trim: true },
-  fileUrl: { type: String, required: true },
+  title: { type: String, required: true, trim: true },
+  sourceUrl: { type: String, required: true },
   storageKey:{type:String , required:true},
   fileSizeByte: { type: Number, required: true, min: 0 },
   mimeType: { type: String, required: true },

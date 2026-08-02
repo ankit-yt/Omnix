@@ -3,17 +3,26 @@
 import { useState, useEffect } from 'react';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { billingService } from '@/services/billing.service';
+import { authService } from '@/services/auth.service';
+import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle, X } from "lucide-react";
 
 export default function BillingPage() {
   const isRazorpayLoaded = useRazorpay();
+  const { user, setAuth, accessToken } = useAuthStore();
+  
   const [plans, setPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
 
-  // Note: You should pull this from your global auth/user state
-  const currentPlanCode = 'free';
+  // Modal State for Cancellation
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Dynamic User Plan Status
+  const currentPlanCode = user?.organization?.cachedPlan || 'free';
+  const isCancelled = user?.organization?.subscription?.status === 'cancelled';
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -44,15 +53,18 @@ export default function BillingPage() {
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         subscription_id: checkoutData.razorpaySubscriptionId,
-        name: "ERP Genius",
+        name: "Omnix AI",
         description: `Upgrade to ${planName}`,
         handler: async function (response: any) {
           const rzpSubId = response.razorpay_subscription_id;
           await billingService.syncRazorpaySubscription(rzpSubId);
 
           toast.success('Payment successful! Your limits have been upgraded.');
-          toast.success('Payment successful! Your limits have been upgraded.');
-          window.location.replace('/dashboard');
+          
+          // Refresh user session state so the UI updates to the new plan
+          const meRes = await authService.getMe();
+          if (accessToken) setAuth(meRes.data, accessToken);
+          
         },
         theme: {
           color: "#7c3aed",
@@ -74,6 +86,26 @@ export default function BillingPage() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    const toastId = toast.loading("Initiating cancellation...");
+
+    try {
+      await billingService.cancelSubscription(); // Call your backend /cancel endpoint
+      toast.success("Subscription cancelled successfully. Your plan will downgrade shortly.", { id: toastId });
+      
+      // Refresh user state to reflect the downgrade immediately in the UI
+      const meRes = await authService.getMe();
+      if (accessToken) setAuth(meRes.data, accessToken);
+      
+      setIsCancelModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to cancel subscription.", { id: toastId });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -83,10 +115,17 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-8 lg:p-12">
+    <div className="flex h-full flex-col overflow-y-auto p-8 lg:p-12 relative">
       <header className="mb-12 text-center">
         <h1 className="text-3xl font-medium tracking-tight text-white">Upgrade your workspace</h1>
         <p className="mt-2 text-sm text-white/40">Supercharge your ERP interactions with higher limits and advanced features.</p>
+        
+        {isCancelled && currentPlanCode !== 'free' && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-1.5 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
+            <AlertTriangle className="h-3 w-3" />
+            Your subscription has been cancelled and will drop to the free tier.
+          </div>
+        )}
       </header>
 
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
@@ -94,7 +133,6 @@ export default function BillingPage() {
           const isCurrentPlan = plan.code === currentPlanCode;
           const { originalPriceInPaise, salePriceInPaise, isDiscounted, promotionDetails } = plan.pricing;
 
-          // Format prices (Paise to standard currency)
           const displayPrice = isDiscounted ? salePriceInPaise / 100 : originalPriceInPaise / 100;
           const originalPrice = originalPriceInPaise / 100;
 
@@ -147,6 +185,16 @@ export default function BillingPage() {
                 {processingPlanId === plan._id ? 'Processing...' : isCurrentPlan ? 'Active' : 'Upgrade'}
               </button>
 
+              {/* CANCEL SUBSCRIPTION LINK */}
+              {isCurrentPlan && plan.code !== 'free' && !isCancelled && (
+                <button
+                  onClick={() => setIsCancelModalOpen(true)}
+                  className="mt-4 w-full text-center text-xs font-medium text-white/40 transition-colors hover:text-red-400"
+                >
+                  Cancel Subscription
+                </button>
+              )}
+
               <div className="my-8 h-px w-full bg-white/5" />
 
               <ul className="space-y-4">
@@ -167,6 +215,48 @@ export default function BillingPage() {
           );
         })}
       </div>
+
+      {/* Cancellation Confirmation Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/80 px-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md animate-[rise_0.3s_ease-out_both] overflow-hidden rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 shadow-2xl">
+            
+            <button 
+              onClick={() => setIsCancelModalOpen(false)}
+              disabled={isCancelling}
+              className="absolute right-6 top-6 rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-50"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-400 ring-1 ring-red-500/20">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            
+            <h2 className="mb-2 text-xl font-medium tracking-tight text-white">Cancel Subscription?</h2>
+            <p className="mb-8 text-sm leading-relaxed text-white/60">
+              Are you sure you want to cancel your <strong className="text-white">{currentPlanCode}</strong> plan? Your workspace limits will be immediately downgraded to the free tier.
+            </p>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsCancelModalOpen(false)}
+                disabled={isCancelling}
+                className="h-12 flex-1 rounded-2xl bg-white/5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+              >
+                Keep Plan
+              </button>
+              <button 
+                onClick={handleCancelSubscription}
+                disabled={isCancelling}
+                className="h-12 flex-1 rounded-2xl bg-red-500 text-sm font-medium text-white transition-all hover:bg-red-600 active:scale-95 disabled:opacity-50"
+              >
+                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -45,7 +45,6 @@ export const uploadAndProcessDocument = asyncHandler(async(req:Request , res:Res
     if (!rawText.trim()) {
     throw new AppError('The uploaded document contains no readable text.', 422);
   }
-
   const newDocument = await documentService.processDocument(
     workspaceId,
     organizationId,
@@ -54,7 +53,8 @@ export const uploadAndProcessDocument = asyncHandler(async(req:Request , res:Res
     rawText,
     file.originalname, 
     file.mimetype,     
-    file.size
+    'file',
+    file.size,
   );
 
   res.status(202).json({

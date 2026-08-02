@@ -1,9 +1,10 @@
 // src/repositories/workspace.repository.ts
-import { ClientSession } from 'mongoose'
+import { ClientSession, UpdateQuery } from 'mongoose'
 import { Workspace } from '@/models/base/index.js'
 import { IWorkspace, IWorkspaceDoc } from '@/models/base/types.js'
 import mongoose from 'mongoose'
 import { UpdateWorkspaceDto } from '@/validators/workspace.validator.js'
+import { UpdateCrawlingStatusDto } from '@/dtos/crawl.dto.js';
 class WorkspaceRepository {
 
   async create(data: Partial<IWorkspace>, session?: ClientSession): Promise<IWorkspaceDoc> {
@@ -22,6 +23,7 @@ class WorkspaceRepository {
   async findByIdToUpdate(workspaceId: string): Promise<IWorkspaceDoc | null> {
     return Workspace.findById(workspaceId)
   }
+
 
   async findByIdAndUpdate(workspaceId: string, data: UpdateWorkspaceDto, session?: ClientSession): Promise<IWorkspaceDoc | null> {
     return Workspace.findByIdAndUpdate(workspaceId, data, { returnDocument: 'after', runValidators: true, session });
@@ -68,6 +70,33 @@ class WorkspaceRepository {
         }
       },
       { session }
+    );
+  }
+
+  async updateCrawlingStatus(workspaceId: string,data: UpdateCrawlingStatusDto,session?: ClientSession): Promise<IWorkspaceDoc | null> {
+    return Workspace.findByIdAndUpdate(
+      workspaceId,
+      {
+        $set: {
+          ...(data.status !== undefined && {
+            "crawlingStatus.status": data.status,
+          }),
+          ...(data.lastCrawledAt !== undefined && {
+            "crawlingStatus.lastCrawledAt": data.lastCrawledAt,
+          }),
+          ...(data.pagesCrawled !== undefined && {
+            "crawlingStatus.pagesCrawled": data.pagesCrawled,
+          }),
+          ...(data.errorMessage !== undefined && {
+            "crawlingStatus.errorMessage": data.errorMessage,
+          }),
+        },
+      },
+      {
+        returnDocument: "after",
+        runValidators: true,
+        session,
+      }
     );
   }
 

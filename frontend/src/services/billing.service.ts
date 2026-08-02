@@ -8,12 +8,16 @@ export const billingService = {
   },
 
   createCheckout: async(planId:string)=>{
-    const response = await api.post('/subscriptions/checkout',{planId});
+    const response = await api.post('/subscription/checkout',{planId});
     return response.data.data;
   },
 
   syncRazorpaySubscription: async(razorpaySubscriptionId:string)=>{
-    const response = await api.post('/sync' , {razorpaySubscriptionId});
+    const response = await api.post('/subscription/sync' , {razorpaySubscriptionId});
     return response.data.message;
+  },
+  cancelSubscription: async () => {
+    const response = await api.post('/subscription/cancel');
+    return response.data;
   }
 }

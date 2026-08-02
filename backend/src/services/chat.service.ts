@@ -1,3 +1,4 @@
+import { ICitation } from '@/models/Message.js';
 import ChatSessionRepository from '@/repositories/chatSession.repository.js';
 import chunkRepository from '@/repositories/chunk.repository.js';
 import messageRepository from '@/repositories/message.repository.js';
@@ -262,7 +263,7 @@ Return ONLY the updated summary text.
       role: 'user',
       content: dto.content,
       metadata: {
-        pageUrl: '', screenshotAnalysis: '', sourceChunks: [],
+        pageUrl: '', screenshotAnalysis: '', sourceChunks: [],citations:[],
         tokensUsed: 0, responseTime: 0, modelUsed: '', retrievalScore: 0
       }
     });
@@ -275,16 +276,38 @@ Return ONLY the updated summary text.
     // ── 4: only embed + retrieve when the message is organization-specific ──
     let contextText = '';
     let sourceChunkIds: mongoose.Types.ObjectId[] = [];
+    let citations: ICitation[] = [];
     let similarChunksCount = 0;
 
     if (intent === 'organization') {
       const queryVector = await aiService.generateEmbedding(dto.content, 'RETRIEVAL_QUERY');
       const similarChunks = await chunkRepository.findSimilarChunks(dto.workspaceId, queryVector, 5);
 
+      const uniqueSourcesMap = new Map();
+
       if (similarChunks.length) {
         contextText = similarChunks
-          .map((chunk, index) => `[Source ${index + 1}] ${chunk.content}`)
+          .map((chunk: any, index) => {
+            const doc = chunk.knowledgeDocument;
+
+            const sourceIdentifier = doc.sourceType === 'webpage'
+              ? `Website: ${doc.title} (${doc.sourceUrl})`
+              : `Document: ${doc.title}`;
+
+            if (doc._id && !uniqueSourcesMap.has(doc._id.toString())) {
+              uniqueSourcesMap.set(doc._id.toString(), {
+                document: doc._id,
+                sourceType: doc.sourceType,
+                title: doc.title,
+                url: doc.sourceUrl || null
+              } as ICitation);
+
+            }
+            return `[Source ${index + 1} - ${sourceIdentifier}]:\n${chunk.content}`;
+          })
           .join("\n\n");
+
+        citations = Array.from(uniqueSourcesMap.values());
         sourceChunkIds = similarChunks.map(chunk => new mongoose.Types.ObjectId(chunk._id));
         similarChunksCount = similarChunks.length;
       }
@@ -324,6 +347,7 @@ ${dto.content}
             pageUrl: dto.page.url || '',
             screenshotAnalysis: '',
             sourceChunks: sourceChunkIds,
+            citations,
             tokensUsed: tokenUsed,
             responseTime: responseTimeMs,
             modelUsed: 'gemini-flash-latest',
@@ -337,7 +361,11 @@ ${dto.content}
         await workspaceRepository.recordMessageUsage(dto.workspaceId, session);
 
         if (organization.onboardingStatus && !organization.onboardingStatus.firstSuccessfulMessage) {
-          await organizationRepository.markFirstMessageCompleted(organizationId, session);
+          await organizationRepository.updateOnboardingStep(
+            organizationId,
+            'firstSuccessfulMessage',
+            session
+          );
         }
 
       });
@@ -351,6 +379,7 @@ ${dto.content}
         sessionId: activeSessionId,
         answer: answer,
         sourcesUsed: sourceChunkIds.length,
+        citations,
         intent
       };
 
