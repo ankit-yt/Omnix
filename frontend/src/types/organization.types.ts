@@ -11,6 +11,8 @@ export interface CachedLimits {
   knowledgeBaseSizeMB: number;
   teamMembers: number;
   maxWorkspaces: number;
+  crawlingEnabled: boolean;
+    maxPagesPerCrawl: number;
 }
 
 export interface CachedUsage {

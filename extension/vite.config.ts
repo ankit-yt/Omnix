@@ -3,17 +3,22 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react(),tailwindcss(),],
+  plugins: [react(), tailwindcss()],
   build: {
+    cssCodeSplit: false, // Don't split CSS
+    lib: {
+      entry: 'src/embed.tsx', // We will create this entry file next
+      name: 'OmnixWidget',
+      fileName: () => 'widget.js',
+      formats: ['iife'], // Creates a self-executing script suitable for browsers
+    },
     rollupOptions: {
-      input: {
-        content: 'src/content.tsx', // Our entry point
-      },
       output: {
-        entryFileNames: '[name].js', // Prevents Vite from adding random hashes
-        format: 'iife', // Immediately Invoked Function Expression for content scripts
+        inlineDynamicImports: true, 
       },
     },
-    cssCodeSplit: false, // Bundle all CSS into one file
+  },
+  define: {
+    'process.env.NODE_ENV': '"production"',
   },
 });

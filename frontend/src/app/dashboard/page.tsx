@@ -1,15 +1,41 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { 
   CheckCircle2, Circle, ArrowRight, Activity, HardDrive, LayoutGrid, 
   Terminal, Copy, FileText, MessageSquare, CreditCard 
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { workspaceService } from "@/services/workspace.service"; 
 import Link from "next/link";
 import { toast } from "sonner";
 
 export default function DashboardLandingPage() {
   const user = useAuthStore((state) => state.user);
+  
+  // State to hold workspaces and the currently selected one for the snippet
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
+
+  useEffect(() => {
+    const fetchWorkspaces = async () => {
+      try {
+        const data = await workspaceService.getWorkspaces();
+        if (data && data.length > 0) {
+          setWorkspaces(data);
+          // Default to the first active workspace
+          const activeWorkspace = data.find((w: any) => w.isActive) || data[0];
+          setSelectedWorkspaceId(activeWorkspace._id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch workspaces for widget snippet", error);
+      }
+    };
+
+    if (user) {
+      fetchWorkspaces();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -28,7 +54,8 @@ export default function DashboardLandingPage() {
     onboardingStatus.firstSuccessfulMessage;
 
   const handleCopySnippet = () => {
-    const snippet = `<script\n  src="https://cdn.omnix.ai/widget.js"\n  data-workspace-id="YOUR_WORKSPACE_ID"\n  defer>\n</script>`;
+    const snippetId = selectedWorkspaceId || "YOUR_WORKSPACE_ID";
+    const snippet = `<script\n  src="https://cdn.omnix.ai/widget.js"\n  data-workspace-id="${snippetId}"\n  defer>\n</script>`;
     navigator.clipboard.writeText(snippet);
     toast.success("Embed snippet copied to clipboard!");
   };
@@ -88,13 +115,36 @@ export default function DashboardLandingPage() {
                     <p className="text-xs text-white/40">Paste this into your website's &lt;head&gt; tag</p>
                   </div>
                 </div>
+
+                {/* Workspace Selector Dropdown */}
+                {workspaces.length > 0 && (
+                  <div className="mb-4">
+                    <label className="mb-1.5 block text-[13px] font-medium text-white/60">Select Workspace</label>
+                    <div className="relative">
+                      <select
+                        value={selectedWorkspaceId}
+                        onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                        className="h-10 w-full appearance-none rounded-xl bg-white/5 px-3 text-sm text-white outline-none ring-1 ring-white/10 transition-all focus:bg-white/10 focus:ring-white/30 [&>option]:bg-[#0a0d16]"
+                      >
+                        {workspaces.map((ws) => (
+                          <option key={ws._id} value={ws._id}>
+                            {ws.name} {!ws.isActive && "(Inactive)"}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/40 text-[10px]">
+                        ▼
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="relative rounded-2xl bg-[#0a0d16] p-4 ring-1 ring-white/10">
                   <pre className="overflow-x-auto text-[13px] text-white/70">
                     <code>
                       <span className="text-pink-400">&lt;script</span>{'\n'}
                       <span className="text-blue-300">  src=</span><span className="text-green-300">"https://cdn.omnix.ai/widget.js"</span>{'\n'}
-                      <span className="text-blue-300">  data-workspace-id=</span><span className="text-green-300">"YOUR_WORKSPACE_ID"</span>{'\n'}
+                      <span className="text-blue-300">  data-workspace-id=</span><span className="text-green-300">"{selectedWorkspaceId || 'YOUR_WORKSPACE_ID'}"</span>{'\n'}
                       <span className="text-blue-300">  defer</span><span className="text-pink-400">&gt;</span>{'\n'}
                       <span className="text-pink-400">&lt;/script&gt;</span>
                     </code>
@@ -156,7 +206,7 @@ export default function DashboardLandingPage() {
           <MetricCard 
             icon={<HardDrive className="h-5 w-5" />}
             title="Knowledge Base" 
-            used={cachedUsage.knowledgeBaseSizeMB || 0} 
+            used={cachedUsage.usedKnowledgeBaseSizeMB || 0} 
             total={cachedLimits.knowledgeBaseSizeMB} 
             label="Megabytes Uploaded"
             suffix=" MB"
@@ -187,7 +237,6 @@ function QuickActionCard({ href, icon, title, description, bg, ring, className =
   );
 }
 
-// ... Keep existing OnboardingStep and MetricCard components below ...
 function OnboardingStep({ title, description, isCompleted, isActive, actionUrl }: { title: string, description: string, isCompleted: boolean, isActive: boolean, actionUrl: string }) {
   return (
     <div className={`flex flex-1 items-start gap-4 rounded-3xl p-6 ring-1 backdrop-blur-xl transition-all ${isActive ? 'bg-white/10 ring-white/20 shadow-lg scale-[1.02]' : 'bg-white/2 ring-white/[0.05]'}`}>

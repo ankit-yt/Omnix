@@ -29,13 +29,20 @@ const PORT = process.env.PORT || 5000
 
 app.set('trust proxy', 1);
 
-app.use(helmet())
+app.use(
+    helmet({
+        crossOriginResourcePolicy: {
+            policy: "cross-origin"
+        }
+    })
+);
 app.use(cors({
-  origin: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+  origin:[ process.env.NEXTAUTH_URL || 'http://localhost:3000' ,"https://barber-queue-eta.vercel.app" , "http://localhost:5173"],
   credentials: true
 }))
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }))
+app.use(express.static("public"));
 
 app.use('/api', express.json());
 

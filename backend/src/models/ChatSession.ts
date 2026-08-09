@@ -3,11 +3,11 @@ import { softDeletePlugin } from "@/models/base/plugins.js";
 import { ISoftDelete } from "@/models/base/types.js";
 
 export interface IChatSession extends ISoftDelete {
-   _id?: mongoose.Types.ObjectId;
+  _id?: mongoose.Types.ObjectId;
 
   organization: mongoose.Types.ObjectId;
   workspace: mongoose.Types.ObjectId;
-
+  visitorId: string;
   title: string;
 
   page: {
@@ -33,82 +33,89 @@ export interface IChatSession extends ISoftDelete {
   updatedAt: Date;
 }
 
-export interface IChatSessionDoc extends Omit<IChatSession, "_id">, Document {}
+export interface IChatSessionDoc extends Omit<IChatSession, "_id">, Document { }
 
 const ChatSessionSchema = new Schema<IChatSessionDoc>({
-    organization: {
-      type: Schema.Types.ObjectId,
-      ref: "Organization",
-      required: true,
-    },
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: "Organization",
+    required: true,
+  },
 
-    workspace: {
-      type: Schema.Types.ObjectId,
-      ref: "Workspace",
+  workspace: {
+    type: Schema.Types.ObjectId,
+    ref: "Workspace",
+    required: true,
+  },
+  
+  visitorId: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true,
+  },
+
+  title: {
+    type: String,
+    default: "New Chat",
+    trim: true,
+    maxlength: [150, "Title cannot exceed 150 characters"],
+  },
+
+  page: {
+    url: {
+      type: String,
       required: true,
+      trim: true,
     },
 
     title: {
       type: String,
-      default: "New Chat",
+      default: "",
       trim: true,
-      maxlength: [150, "Title cannot exceed 150 characters"],
     },
+  },
 
-    page: {
-      url: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-      title: {
-        type: String,
-        default: "",
-        trim: true,
-      },
-    },
-
-    client: {
-      userAgent: {
-        type: String,
-        default: "",
-      },
-    },
-
-    conversationSummary: {
+  client: {
+    userAgent: {
       type: String,
       default: "",
     },
-
-    messageCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    totalTokenUsed: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-
-    lastActivityAt: {
-      type: Date,
-      default: Date.now,
-    },
   },
+
+  conversationSummary: {
+    type: String,
+    default: "",
+  },
+
+  messageCount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  totalTokenUsed: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+
+  lastActivityAt: {
+    type: Date,
+    default: Date.now,
+  },
+},
   {
     timestamps: true,
 
     toJSON: {
       transform(doc, ret) {
-        const {__v , ...safeJson} = ret;
+        const { __v, ...safeJson } = ret;
         return safeJson;
       },
     },
@@ -127,6 +134,12 @@ ChatSessionSchema.index({
 ChatSessionSchema.index({
   organization: 1,
   workspace: 1,
+  lastActivityAt: -1,
+});
+
+ChatSessionSchema.index({
+  workspace: 1,
+  visitorId: 1,
   lastActivityAt: -1,
 });
 

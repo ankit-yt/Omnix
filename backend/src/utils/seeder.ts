@@ -20,7 +20,9 @@ export const seedSystemPlans = async():Promise<void>=>{
             messagesPerMonth:100,
             knowledgeBaseSizeMB:10,
             teamMembers:1,
-            maxWorkspaces:1
+            maxWorkspaces:1,
+            crawlingEnabled:false,
+            maxPagesPerCrawl:0,
           },
           features:[
             '10 MB Knowledge Base Storage',
@@ -40,7 +42,9 @@ export const seedSystemPlans = async():Promise<void>=>{
             messagesPerMonth:1000,
             knowledgeBaseSizeMB:200,
             teamMembers:5,
-            maxWorkspaces:4
+            maxWorkspaces:4,
+            crawlingEnabled:true,
+            maxPagesPerCrawl:10
           },
           features:[
             '200 MB Knowledge Base Storage',

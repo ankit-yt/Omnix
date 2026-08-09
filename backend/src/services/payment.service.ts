@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import promotionRepository from '@/repositories/promotion.repository.js';
 import subscriptionRepository from '@/repositories/subscription.repository.js';
 import organizationRepository from '@/repositories/organization.repository.js';
+import workspaceRepository from '@/repositories/workspace.repository.js';
 
 class PaymentService {
   private razorpay: Razorpay;
@@ -144,10 +145,11 @@ class PaymentService {
               {
                 "subscription.status": "cancelled",
                 cachedPlan: freePlan.code,
-                cachedLimits: freePlan.limits
+                cachedLimits: freePlan.limits,
               },
               session
             );
+            await workspaceRepository.deactivateExcessWorkspaces(organizationId, session);
           }
         }
         await session.commitTransaction();
@@ -205,6 +207,9 @@ class PaymentService {
             },
             session
           );
+          if(plan.code ==='pro'){
+             await workspaceRepository.activateAllWorkspaces(organizationId, session);
+          }
         }
         else {
           if (subscriptionOrder) {

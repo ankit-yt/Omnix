@@ -1,13 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>extension</title>
+    <title>Omnix Widget Dev Tester</title>
+    <style>
+      body { font-family: sans-serif; padding: 50px; background: black; }
+      .test-box { max-width: 600px; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="test-box">
+      <h1>Widget Testing Sandbox</h1>
+      <p>Open your browser's Developer Tools (F12) and check the <strong>Console</strong> and <strong>Network</strong> tabs for errors.</p>
+    </div>
+
+    <!-- 
+      Notice we use type="module" and point directly to your uncompiled embed.tsx. 
+      Replace YOUR_ACTUAL_WORKSPACE_ID with a real ID from your local database!
+    -->
+    <script 
+      type="module" 
+      src="/src/embed.tsx" 
+      data-workspace-id="6a6f117a62d1911541951710">
+    </script>
   </body>
 </html>

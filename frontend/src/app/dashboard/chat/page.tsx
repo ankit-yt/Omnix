@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import {
   MessageSquare, ArrowRight, ExternalLink, Bot, User as UserIcon, AlertTriangle,
   Check,
   ChevronDown,
-  Plus
+  Loader2
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { workspaceService } from "@/services/workspace.service";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import remarkGfm from "remark-gfm";
 import { useChatStore } from "@/store/useChatStore";
 import { SPRING } from "@/components/ui/formInput";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 type Citation = {
   id: string;
@@ -29,12 +30,14 @@ type Message = {
   role: "user" | "ai";
   content: string;
   citations?: Citation[];
+  createdAt?: string;
 };
+
+const MESSAGE_PAGE_SIZE = 30;
 
 export default function ChatPage() {
   const user = useAuthStore((state) => state.user);
   const { activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
-  const accessToken = useAuthStore((state) => state.accessToken);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,9 +45,18 @@ export default function ChatPage() {
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [workspaceRendered, setWorkspaceRendered] = useState(false);
 
+  // --- pagination state for older messages ---
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // used to preserve scroll position when we prepend older messages
+  const preserveScrollRef = useRef<{ height: number; top: number } | null>(null);
 
   const openWorkspace = () => {
     setWorkspaceRendered(true);
@@ -71,8 +83,7 @@ export default function ChatPage() {
     fetchWorkspaces();
   }, [setActiveWorkspaceId]);
 
-
-
+  // --- initial session load: fetch the most recent page of messages ---
   useEffect(() => {
     const loadSession = async () => {
       if (!activeSessionId) {
@@ -82,40 +93,115 @@ export default function ChatPage() {
           role: "ai",
           content: `Hello ${user?.name || ''}! I am the Copilot for ${ws?.name || 'this workspace'}. How can I help you today?`
         }]);
-        setActiveSessionId(null);
+        setHasMoreOlder(false);
+        setOldestCursor(null);
         return;
       }
-      console.log(activeWorkspaceId)
 
       try {
-        setIsTyping(true);
+        setInitialLoading(true);
+        setHasMoreOlder(false);
+        setOldestCursor(null);
 
-        const history = await chatService.getSessionMessages(activeSessionId);
+        const result = await chatService.getSessionMessages(activeSessionId, {
+          limit: MESSAGE_PAGE_SIZE,
+        });
 
-        const formattedMessages = history.data.map((msg: any) => ({
-          id: msg._id,
-          role: msg.role,
+        const formattedMessages: Message[] = result.data.map((msg: any) => ({
+          id: msg.id ?? msg._id,
+          role: msg.role === "assistant" ? "ai" : msg.role,
           content: msg.content,
-          citations: msg.metadata?.citations ?? []
+          citations: msg.metadata?.citations ?? msg.citations ?? [],
+          createdAt: msg.createdAt,
         }));
 
         setMessages(formattedMessages);
+        setHasMoreOlder(result.meta.hasMore);
+        setOldestCursor(result.meta.nextCursor);
       } catch {
         toast.error("Failed to load conversation history.");
         setActiveSessionId(null);
       } finally {
-        setIsTyping(false);
+        setInitialLoading(false);
       }
     };
 
     loadSession();
   }, [activeSessionId, activeWorkspaceId, workspaces, user, setActiveSessionId]);
 
+  // --- load older messages when the top sentinel comes into view ---
+  const loadOlderMessages = useCallback(async () => {
+    if (!activeSessionId || !oldestCursor || isLoadingOlder) return;
 
-  // Auto-scroll
+    const container = scrollContainerRef.current;
+    if (container) {
+      preserveScrollRef.current = {
+        height: container.scrollHeight,
+        top: container.scrollTop,
+      };
+    }
+
+    setIsLoadingOlder(true);
+    try {
+      const result = await chatService.getSessionMessages(activeSessionId, {
+        limit: MESSAGE_PAGE_SIZE,
+        before: oldestCursor,
+      });
+
+      const olderMessages: Message[] = result.data.map((msg: any) => ({
+        id: msg.id ?? msg._id,
+        role: msg.role === "assistant" ? "ai" : msg.role,
+        content: msg.content,
+        citations: msg.metadata?.citations ?? msg.citations ?? [],
+        createdAt: msg.createdAt,
+      }));
+
+      setMessages((prev) => [...olderMessages, ...prev]);
+      setHasMoreOlder(result.meta.hasMore);
+      setOldestCursor(result.meta.nextCursor);
+    } catch {
+      toast.error("Failed to load earlier messages.");
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }, [activeSessionId, oldestCursor, isLoadingOlder]);
+
+  const topSentinelRef = useInfiniteScroll({
+    onLoadMore: loadOlderMessages,
+    hasMore: hasMoreOlder,
+    isLoading: isLoadingOlder,
+    root: scrollContainerRef.current,
+    rootMargin: "60px",
+  });
+
+  // restore scroll position right after older messages are prepended,
+  // so the viewport doesn't visually jump
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    const preserved = preserveScrollRef.current;
+    if (!container || !preserved) return;
+
+    const newHeight = container.scrollHeight;
+    container.scrollTop = newHeight - preserved.height + preserved.top;
+    preserveScrollRef.current = null;
+  }, [messages]);
+
+  // Auto-scroll to bottom for new messages / typing, not on older-message loads
   useEffect(() => {
+    if (isLoadingOlder || preserveScrollRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [isTyping]);
+
+  // Auto-scroll to bottom once the initial message page has finished loading.
+  // This is what was missing before — nothing previously fired a scroll-to-bottom
+  // when a session's messages first loaded, so the feed stayed pinned at the top.
+  useEffect(() => {
+    if (initialLoading) return;
+    // run after layout so content (markdown, citations) has settled before we scroll
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    });
+  }, [initialLoading]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -129,10 +215,7 @@ export default function ChatPage() {
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [workspaceRendered]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -141,21 +224,19 @@ export default function ChatPage() {
 
     const userMessageContent = prompt;
 
-    // 1. Add user message to UI immediately
     const newUserMsg: Message = { id: Date.now(), role: "user", content: userMessageContent };
     setMessages((prev) => [...prev, newUserMsg]);
     setPrompt("");
     setIsTyping(true);
-
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
     try {
-
       const response = await chatService.sendMessage({
         workspaceId: activeWorkspaceId,
         content: userMessageContent,
         sessionId: activeSessionId
       });
-      console.log(response)
+
       if (!activeSessionId && response.sessionId) {
         setActiveSessionId(response.sessionId);
       }
@@ -186,7 +267,6 @@ export default function ChatPage() {
     const workspace = workspaces.find(w => w._id === activeWorkspaceId);
     if (!workspace) return;
 
-    // Fallback URL if your schema doesn't have an erpUrl yet
     const rawUrl = workspace.erpUrl || "https://example-erp.com";
 
     try {
@@ -202,11 +282,24 @@ export default function ChatPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden p-6 lg:p-4">
 
-
-
       {/* --- Chat Feed Area --- */}
-      <div className="flex-1 overflow-y-auto rounded-3xl  p-4 sm:p-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto rounded-3xl p-4 sm:p-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-6 pb-4">
+
+          {/* top sentinel — triggers loading older messages */}
+          <div ref={topSentinelRef} className="h-1 w-full shrink-0" />
+
+          {initialLoading && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+            </div>
+          )}
+
+          {isLoadingOlder && !initialLoading && (
+            <div className="flex items-center justify-center py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+            </div>
+          )}
 
           {messages.map((msg) => (
             <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
@@ -313,8 +406,7 @@ export default function ChatPage() {
           onSubmit={handleSendMessage}
           className="relative flex items-center rounded-full bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-2xl transition-all focus-within:bg-white/10 focus-within:ring-white/30 shadow-lg"
         >
-          <div
-            className="relative">
+          <div className="relative">
             <button
               type="button"
               onClick={() => (workspaceRendered ? closeWorkspace() : openWorkspace())}
@@ -322,8 +414,7 @@ export default function ChatPage() {
               className="flex h-10 w-10 items-center gap-2 rounded-2xl px-3 text-sm text-white transition-all"
             >
               <ChevronDown
-                className={`h-4 w-4 transition-transform duration-300 ${workspaceOpen ? "rotate-180" : ""
-                  }`}
+                className={`h-4 w-4 transition-transform duration-300 ${workspaceOpen ? "rotate-180" : ""}`}
               />
             </button>
 
@@ -347,7 +438,7 @@ export default function ChatPage() {
 
                 <div className="max-h-72 overflow-y-auto p-2">
                   {workspaces.map((ws, i) => (
-                    <button
+                    (ws.isActive) && (<button
                       key={ws._id}
                       type="button"
                       onClick={() => {
@@ -369,7 +460,7 @@ export default function ChatPage() {
                     >
                       <span className="truncate">{ws.name}</span>
                       {activeWorkspaceId === ws._id && <Check className="h-4 w-4 text-white" />}
-                    </button>
+                    </button>)
                   ))}
                 </div>
               </div>
@@ -398,7 +489,6 @@ export default function ChatPage() {
           <p>Omnix AI can make mistakes. Verify critical ERP outputs.</p>
         </div>
       </div>
-
 
       <button
         type="button"

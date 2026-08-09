@@ -10,6 +10,11 @@ export const documentService = {
     return response.data;
   },
 
+  triggerWebsiteCrawl: async (workspaceId: string, sourceUrl: string) => {
+    const response = await api.post(`/documents/${workspaceId}/crawl`, { sourceUrl });
+    return response.data;
+  },
+
   getDocuments: async(workspaceId?:string)=>{
     const url = workspaceId ? `/documents?workspaceId=${workspaceId}` :'/documents';
     const response = await api.get(url);
@@ -17,7 +22,6 @@ export const documentService = {
   },
   
   deleteDocument: async (documentId: string) => {
-    // responseType: 'blob' is CRITICAL for handling file downloads
     const response = await api.delete(`/documents/${documentId}`, {
       responseType: 'blob' 
     });

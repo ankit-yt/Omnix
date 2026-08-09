@@ -18,6 +18,8 @@ export interface IPlan extends ISoftDelete , IAudit{
     knowledgeBaseSizeMB : number;
     teamMembers:number;
     maxWorkspaces: number;
+    crawlingEnabled: boolean;
+    maxPagesPerCrawl: number;
   };
   features:string[];
   createdAt:Date;
@@ -75,7 +77,9 @@ const PlanSchema = new Schema<IPlanDoc>({
     maxWorkspaces: {
       type: Number,
       required: true
-    }
+    },
+    crawlingEnabled: { type: Boolean, required: true, default: false },
+    maxPagesPerCrawl: { type: Number, required: true, default: 0 }
   },
   features:{
     type:[String],

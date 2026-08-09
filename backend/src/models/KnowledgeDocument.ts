@@ -10,11 +10,12 @@ export interface IKnowledgeDocument extends ISoftDelete, IAudit {
 
   sourceType: 'file' | 'webpage';
 
-  originalFileName: string;
+  // Mark fields that don't apply to webpages as optional in TypeScript
+  originalFileName?: string;
   title: string;
   sourceUrl: string;
-  storageKey:string;
-  fileSizeByte: number;
+  storageKey?: string | null;
+  fileSizeByte?: number;
   mimeType: string;
 
   status: 'processing' | 'ready' | 'failed';
@@ -24,7 +25,7 @@ export interface IKnowledgeDocument extends ISoftDelete, IAudit {
   processingError: string | null;
   processedAt: Date | null;
 
-  uploadedBy: mongoose.Types.ObjectId;
+  uploadedBy?: mongoose.Types.ObjectId; // Optional for crawlers
   
   createdAt: Date;
   updatedAt: Date;
@@ -43,12 +44,29 @@ const KnowledgeDocumentSchema = new Schema<IKnowledgeDocumentDoc>({
     ref: 'Workspace',
     required: true
   },
-  sourceType:{type:String , enum:['file', 'webpage'] , required: true,},
-  originalFileName: { type: String, required: true, trim: true },
+  sourceType: { type: String, enum: ['file', 'webpage'], required: true },
+  
+  // Conditionally required fields based on sourceType
+  originalFileName: { 
+    type: String, 
+    required: function(this: any) { return this.sourceType === 'file'; }, 
+    trim: true 
+  },
+  fileSizeByte: { 
+    type: Number, 
+    required: function(this: any) { return this.sourceType === 'file'; }, 
+    min: 0 
+  },
+  uploadedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: function(this: any) { return this.sourceType === 'file'; }
+  },
+
+  // Remaining standard fields
   title: { type: String, required: true, trim: true },
   sourceUrl: { type: String, required: true },
-  storageKey:{type:String , required:true},
-  fileSizeByte: { type: Number, required: true, min: 0 },
+  storageKey: { type: String },
   mimeType: { type: String, required: true },
   status: {
     type: String,
@@ -58,11 +76,6 @@ const KnowledgeDocumentSchema = new Schema<IKnowledgeDocumentDoc>({
   totalChunks: { type: Number, default: 0 },
   processingError: { type: String, default: null },
   processedAt: { type: Date, default: null },
-  uploadedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
 }, {
   timestamps: true,
   toJSON: {

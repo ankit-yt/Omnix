@@ -73,7 +73,7 @@ class WorkspaceRepository {
     );
   }
 
-  async updateCrawlingStatus(workspaceId: string,data: UpdateCrawlingStatusDto,session?: ClientSession): Promise<IWorkspaceDoc | null> {
+  async updateCrawlingStatus(workspaceId: string, data: UpdateCrawlingStatusDto, session?: ClientSession): Promise<IWorkspaceDoc | null> {
     return Workspace.findByIdAndUpdate(
       workspaceId,
       {
@@ -98,6 +98,57 @@ class WorkspaceRepository {
         session,
       }
     );
+  }
+
+  async deactivateExcessWorkspaces(organizationId: string, session?: ClientSession): Promise<number> {
+     const firstWorkspace = await Workspace.findOne(
+      {
+        organization: organizationId,
+        isDeleted: false,
+      },
+      { _id: 1 }
+    )
+      .sort({ createdAt: 1 })
+      .session(session ?? null);
+
+    if (!firstWorkspace) {
+      return 0;
+    }
+
+    const result = await Workspace.updateMany(
+      {
+        organization: organizationId,
+        isDeleted: false,
+        _id: { $ne: firstWorkspace._id },
+        isActive: true,
+      },
+      {
+        $set: {
+          isActive: false,
+        },
+      },
+      {
+        session,
+      }
+    );
+
+    return result.modifiedCount;
+  }
+
+  async activateAllWorkspaces(organizationId: string, session?: ClientSession): Promise<number> {
+    const result = await Workspace.updateMany({
+      organization: organizationId,
+      isDeleted: false,
+      isActive: false,
+    }, {
+      $set: {
+        isActive: true,
+      },
+    }, {
+      session,
+    });
+
+    return result.modifiedCount;
   }
 
 }

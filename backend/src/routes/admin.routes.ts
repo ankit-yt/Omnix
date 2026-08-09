@@ -7,7 +7,7 @@ import {Router} from 'express';
 const router = Router();
 
 router.use(authenticate);
-router.use(restrictTo('admin'));
+router.use(restrictTo('super_admin'));
 
 router.post('/promotions',createPromotion);
 router.post('/plans',createPlan);

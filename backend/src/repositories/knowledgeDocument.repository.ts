@@ -1,5 +1,6 @@
 import { KnowledgedDocument } from '@/models/base/index.js'
 import { IKnowledgeDocument, IKnowledgeDocumentDoc } from '@/models/base/types.js'
+import KnowledgeDocument from '@/models/KnowledgeDocument.js';
 import mongoose, { ClientSession } from 'mongoose';
 class knowledgeDocumentRepository {
 
@@ -77,6 +78,10 @@ class knowledgeDocumentRepository {
 
 
     return await KnowledgedDocument.find(query).sort({createdAt:-1})
+  }
+
+  async deleteAllCrawledDocuments(workspaceId:string , sourceType:'file' | 'webpage' ){
+    return KnowledgeDocument.find({workspace:workspaceId , sourceType});
   }
 
 }

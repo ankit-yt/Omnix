@@ -96,7 +96,15 @@ class OrganizationRepository {
     step: keyof IOrganization['onboardingStatus'],
     session?: ClientSession
   ): Promise<void> {
-    const organization = await Organization.findById(organizationId).session(session);
+
+    const query = Organization.findById(organizationId);
+
+
+    if (session) {
+      query.session(session);
+    }
+
+    const organization = await query;
 
     if (!organization) {
       return;
@@ -112,7 +120,7 @@ class OrganizationRepository {
     const onboarding = organization.onboardingStatus;
 
     const isCompleted =
-      onboarding.knowledgeBaseUploaded && 
+      onboarding.knowledgeBaseUploaded &&
       onboarding.firstSuccessfulMessage;
 
     onboarding.completedAt = isCompleted ? new Date() : null;

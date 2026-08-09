@@ -6,6 +6,12 @@ export const createChatSessionSchema = z.object({
     .trim()
     .max(150)
     .optional(),
+
+    visitorId: z
+    .string()
+    .trim()
+    .optional(),
+    
   page: z.object({
     url: z
       .string()

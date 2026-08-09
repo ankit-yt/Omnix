@@ -19,7 +19,7 @@ import { useInitializeAuth } from "@/hooks/useInitializeAuth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChatStore } from "@/store/useChatStore";
 import { useEffect, useState } from "react";
-import { chatService } from "@/services/chat.service";
+import { chatSessionService, ChatSessionSummary } from "@/services/chatSession.service";
 import { toast } from "sonner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,18 +28,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useInitializeAuth();
   const { isInitialized } = useAuthStore();
   const { isHistoryView, setHistoryView, activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const isChatPage = pathname === "/dashboard/chat";
 
   useEffect(() => {
     async function fetchSessions() {
       try {
-
         if (isChatPage && activeWorkspaceId) {
           setHistoryView(true)
-          const res = await chatService.getSessions(activeWorkspaceId)
-          setSessions(res.data.data)
-          console.log(res)
+          const res = await chatSessionService.getWorkspaceSessions(activeWorkspaceId)
+          setSessions(res.data)
         }
       } catch {
         toast.error('Something went wrong')
@@ -47,6 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     fetchSessions();
   }, [activeWorkspaceId, activeSessionId, isChatPage, setHistoryView])
+
   if (!isInitialized) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -191,9 +190,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
-
-
-
         </div>
 
         {/* User Profile Hook */}
@@ -221,4 +217,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   );
 }
-

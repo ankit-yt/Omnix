@@ -11,7 +11,7 @@ import { CheckCircle2, AlertTriangle, X } from "lucide-react";
 export default function BillingPage() {
   const isRazorpayLoaded = useRazorpay();
   const { user, setAuth, accessToken } = useAuthStore();
-  
+
   const [plans, setPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
@@ -60,11 +60,11 @@ export default function BillingPage() {
           await billingService.syncRazorpaySubscription(rzpSubId);
 
           toast.success('Payment successful! Your limits have been upgraded.');
-          
+
           // Refresh user session state so the UI updates to the new plan
           const meRes = await authService.getMe();
           if (accessToken) setAuth(meRes.data, accessToken);
-          
+
         },
         theme: {
           color: "#7c3aed",
@@ -93,11 +93,11 @@ export default function BillingPage() {
     try {
       await billingService.cancelSubscription(); // Call your backend /cancel endpoint
       toast.success("Subscription cancelled successfully. Your plan will downgrade shortly.", { id: toastId });
-      
+
       // Refresh user state to reflect the downgrade immediately in the UI
       const meRes = await authService.getMe();
       if (accessToken) setAuth(meRes.data, accessToken);
-      
+
       setIsCancelModalOpen(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to cancel subscription.", { id: toastId });
@@ -119,7 +119,7 @@ export default function BillingPage() {
       <header className="mb-12 text-center">
         <h1 className="text-3xl font-medium tracking-tight text-white">Upgrade your workspace</h1>
         <p className="mt-2 text-sm text-white/40">Supercharge your ERP interactions with higher limits and advanced features.</p>
-        
+
         {isCancelled && currentPlanCode !== 'free' && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-1.5 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
             <AlertTriangle className="h-3 w-3" />
@@ -139,11 +139,10 @@ export default function BillingPage() {
           return (
             <div
               key={plan._id}
-              className={`relative flex flex-col rounded-3xl p-8 backdrop-blur-xl ring-1 transition-all ${
-                isCurrentPlan
+              className={`relative flex flex-col rounded-3xl p-8 backdrop-blur-xl ring-1 transition-all ${isCurrentPlan
                   ? 'bg-white/10 ring-white/20 shadow-lg scale-[1.02]'
                   : 'bg-white/2 ring-white/[0.05] hover:bg-white/5 hover:ring-white/10'
-              }`}
+                }`}
             >
               {isCurrentPlan && (
                 <span className="absolute -top-3 right-6 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-black shadow-lg">
@@ -176,11 +175,10 @@ export default function BillingPage() {
               <button
                 disabled={isCurrentPlan || processingPlanId === plan._id}
                 onClick={() => handleUpgrade(plan._id, plan.displayName)}
-                className={`mt-6 h-12 w-full rounded-2xl text-sm font-medium transition-all active:scale-95 ${
-                  isCurrentPlan
+                className={`mt-6 h-12 w-full rounded-2xl text-sm font-medium transition-all active:scale-95 ${isCurrentPlan
                     ? 'cursor-not-allowed bg-white/5 text-white/30 ring-1 ring-white/10'
                     : 'bg-white text-black hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]'
-                }`}
+                  }`}
               >
                 {processingPlanId === plan._id ? 'Processing...' : isCurrentPlan ? 'Active' : 'Upgrade'}
               </button>
@@ -210,6 +208,18 @@ export default function BillingPage() {
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-white/40" />
                   {plan.limits.teamMembers === -1 ? 'Unlimited' : plan.limits.teamMembers} Team Members
                 </li>
+                <li className="flex items-center gap-3 text-sm text-white/60">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-white/40" />
+                  {plan.limits.crawlingEnabled ? "Website Crawling" : "No Website Crawling"}
+                </li>
+                {plan.limits.crawlingEnabled && (
+                  <li className="flex items-center gap-3 text-sm text-white/60">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-white/40" />
+                    {plan.limits.maxPagesPerCrawl === -1
+                      ? "Unlimited Pages / Crawl"
+                      : `${plan.limits.maxPagesPerCrawl} Pages / Crawl`}
+                  </li>
+                )}
               </ul>
             </div>
           );
@@ -220,8 +230,8 @@ export default function BillingPage() {
       {isCancelModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/80 px-4 backdrop-blur-md">
           <div className="relative w-full max-w-md animate-[rise_0.3s_ease-out_both] overflow-hidden rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 shadow-2xl">
-            
-            <button 
+
+            <button
               onClick={() => setIsCancelModalOpen(false)}
               disabled={isCancelling}
               className="absolute right-6 top-6 rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-50"
@@ -232,21 +242,21 @@ export default function BillingPage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-400 ring-1 ring-red-500/20">
               <AlertTriangle className="h-6 w-6" />
             </div>
-            
+
             <h2 className="mb-2 text-xl font-medium tracking-tight text-white">Cancel Subscription?</h2>
             <p className="mb-8 text-sm leading-relaxed text-white/60">
               Are you sure you want to cancel your <strong className="text-white">{currentPlanCode}</strong> plan? Your workspace limits will be immediately downgraded to the free tier.
             </p>
 
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setIsCancelModalOpen(false)}
                 disabled={isCancelling}
                 className="h-12 flex-1 rounded-2xl bg-white/5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
               >
                 Keep Plan
               </button>
-              <button 
+              <button
                 onClick={handleCancelSubscription}
                 disabled={isCancelling}
                 className="h-12 flex-1 rounded-2xl bg-red-500 text-sm font-medium text-white transition-all hover:bg-red-600 active:scale-95 disabled:opacity-50"

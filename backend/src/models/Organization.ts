@@ -26,6 +26,8 @@ export interface IOrganization extends ISoftDelete, IAudit {
     knowledgeBaseSizeMB: number;
     teamMembers: number;
     maxWorkspaces: number;
+    crawlingEnabled: boolean;
+    maxPagesPerCrawl: number;
   }
   subscription: {
     activeSubscriptionId: mongoose.Types.ObjectId | null;
@@ -112,6 +114,8 @@ const OrganizationSchema = new Schema<IOrganizationDoc>({
     knowledgeBaseSizeMB: { type: Number, default: 10 },
     teamMembers: { type: Number, default: 1 },
     maxWorkspaces: { type: Number, default: 1 },
+    crawlingEnabled: { type: Boolean, required: true, default: false },
+    maxPagesPerCrawl: { type: Number, required: true, default: 0 }
   },
   subscription: {
     activeSubscriptionId: {

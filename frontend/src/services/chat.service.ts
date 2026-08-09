@@ -1,41 +1,43 @@
-import { api } from "@/lib/api";
+// services/chat.service.ts
+import { api } from "@/lib/api"; // adjust to your actual axios instance path
 
-
-export interface SendMessagePayload {
-  workspaceId: string;
+export interface ChatMessageResponse {
+  id: string;
+  role: "user" | "ai" | "assistant";
   content: string;
-  sessionId?: string | null;
+  createdAt?: string;
+  citations?: any[];
 }
 
-export const chatService = {
-  sendMessage: async (payload: SendMessagePayload) => {
-    // Your backend expects page and client metadata for the DTO
-    const data = {
-      ...payload,
-      page: {
-        url: window.location.href,
-        title: document.title || 'Omnix Dashboard'
-      },
-      client: {
-        userAgent: navigator.userAgent
-      }
-    };
+export interface PaginatedMessagesResult {
+  data: ChatMessageResponse[];
+  meta: {
+    hasMore: boolean;
+    nextCursor: string | null;
+  };
+}
 
-    // Assuming your chat routes are mounted at /api/chat in server.ts
-    const response = await api.post('/chat/message', data);
-    return response.data.data; 
-    // Returns: { messageId, sessionId, answer, sourcesUsed }
-  },
-
-  getSessions: async(workspaceId:string , page= 1 , limit = 20)=>{
-    const response = await api.get(`/chatSessions`,{
-      params:{workspaceId, page, limit}
-    });
-    return response.data;
-  },
-
-  getSessionMessages : async(sessionId:string)=>{
-    const response = await api.get(`/chatSessions/${sessionId}/messages`);
-    return response.data;
+class ChatService {
+  async sendMessage(payload: {
+    workspaceId: string;
+    content: string;
+    sessionId?: string | null;
+  }) {
+    const res = await api.post("/chat/message", payload);
+    return res.data.data;
   }
-};
+
+  async getSessionMessages(
+    sessionId: string,
+    params?: { limit?: number; before?: string }
+  ): Promise<PaginatedMessagesResult> {
+    const res = await api.get(`/chatSessions/${sessionId}/messages`, { params });
+    return {
+      data: res.data.data,
+      meta: res.data.meta,
+    };
+  }
+}
+
+export const chatService = new ChatService();
+export default chatService;

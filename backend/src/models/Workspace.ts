@@ -1,6 +1,6 @@
+import { CRAWLING_STATUSES, CrawlingStatus } from "@/dtos/crawl.dto.js";
 import { auditPlugin, softDeletePlugin } from "@/models/base/plugins.js";
 import { IAudit, ISoftDelete } from "@/models/base/types.js";
-import { CRAWLING_STATUSES, CrawlingStatus } from "@/models/CrawlJob.js";
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface ICrawlingStatus {

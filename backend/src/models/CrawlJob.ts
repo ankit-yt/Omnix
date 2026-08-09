@@ -1,10 +1,10 @@
 // models/CrawlJob.ts
-import { CRAWLING_STATUSES, CrawlingStatus } from "@/dtos/crawl.dto.js";
+import {  CRAWLING_STATUSES, CrawlingStatus } from "@/dtos/crawl.dto.js";
 import mongoose, { Document, Schema } from "mongoose";
 
 
 
-export interface ICrawlJob extends Document {
+export interface ICrawlJob {
   workspace: mongoose.Types.ObjectId;
   organization: mongoose.Types.ObjectId;
   targetUrl: string;
@@ -16,7 +16,9 @@ export interface ICrawlJob extends Document {
   completedAt: Date | null;
 }
 
-const CrawlJobSchema = new Schema<ICrawlJob>({
+export interface ICrawlJobDoc extends Document , ICrawlJob{};
+
+const CrawlJobSchema = new Schema<ICrawlJobDoc>({
   workspace: { type: Schema.Types.ObjectId, ref: 'Workspace', required: true },
   organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
   targetUrl: { type: String, required: true },
@@ -32,4 +34,4 @@ const CrawlJobSchema = new Schema<ICrawlJob>({
   completedAt: { type: Date, default: null }
 });
 
-export default mongoose.model<ICrawlJob>('CrawlJob', CrawlJobSchema);
+export default mongoose.model<ICrawlJobDoc>('CrawlJob', CrawlJobSchema);

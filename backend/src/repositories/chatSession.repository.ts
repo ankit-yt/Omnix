@@ -35,6 +35,25 @@ class ChatSessionRepository {
       .lean();
   }
 
+  async findPaginatedByVisitor(
+  workspaceId: string,
+  visitorId: string,
+  skip: number,
+  limit: number
+): Promise<{ sessions: IChatSessionDoc[]; total: number }> {
+  const [sessions, total] = await Promise.all([
+    ChatSession.find({ workspace: workspaceId, visitorId, isActive: true })
+      .sort({ lastActivityAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('_id title lastActivityAt')
+      .lean(),
+    ChatSession.countDocuments({ workspace: workspaceId, visitorId, isActive: true })
+  ]);
+
+  return { sessions, total };
+}
+
   async countByWorkspace(organizationId: string, workspaceId: string): Promise<number> {
     return ChatSession.countDocuments({
       organization: organizationId,
@@ -42,6 +61,31 @@ class ChatSessionRepository {
       isActive: true
     });
   }
+
+  async findRecentByVisitor(
+  workspaceId: string,
+  visitorId: string,
+  limit: number = 10
+): Promise<IChatSessionDoc[]> {
+  return ChatSession.find({
+    workspace: workspaceId,
+    visitorId,
+    isActive: true,
+  })
+    .sort({ lastActivityAt: -1 })
+    .limit(limit)
+    .select('_id title lastActivityAt')
+    .lean();
+}
+
+async recordSessionActivity(chatSessionId: string, session?: ClientSession): Promise<void> {
+  await ChatSession.findByIdAndUpdate(
+    chatSessionId,
+    { $set: { lastActivityAt: new Date() }, $inc: { messageCount: 1 } },
+    { session }
+  );
+}
+
 }
 
 export default new ChatSessionRepository();

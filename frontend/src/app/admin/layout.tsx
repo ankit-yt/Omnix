@@ -22,25 +22,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const logout = useLogout();
-  const { loading } = useInitializeAuth();
+   useInitializeAuth();
 
   const user = useAuthStore((state)=>state.user);
 
-  useEffect(()=>{
-    if (!loading && user && user.role !== 'super_admin') {
-      toast.error('Access Denied!');
-      router.replace('/dashboard');
-
-    }
-  },[loading , user, router]);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
-      </div>
-    )
-  }
+  
 
   if (!user || user.role !== 'super_admin') {
     return null;
