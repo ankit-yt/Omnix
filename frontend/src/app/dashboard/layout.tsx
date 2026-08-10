@@ -25,8 +25,8 @@ import { toast } from "sonner";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const logout = useLogout();
-  useInitializeAuth();
-  const { isInitialized } = useAuthStore();
+  const { backendUnreachable } = useInitializeAuth();
+const { isInitialized } = useAuthStore();;
   const { isHistoryView, setHistoryView, activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const isChatPage = pathname === "/dashboard/chat";
@@ -46,13 +46,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchSessions();
   }, [activeWorkspaceId, activeSessionId, isChatPage, setHistoryView])
 
-  if (!isInitialized) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
-      </div>
-    )
-  }
+ if (!isInitialized) {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
+    </div>
+  );
+}
+
+if (backendUnreachable) {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-3 text-white/60">
+      <p>Can't reach the server right now.</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
   return (
     <div className="relative flex inset-0 bg-center h-screen w-full bg-cover overflow-hidden p-4 md:p-6"
      >

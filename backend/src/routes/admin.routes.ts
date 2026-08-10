@@ -1,7 +1,7 @@
-import { createPlan, createPromotion, linkRazorpayPlan, updatePlan } from '@/controllers/admin.controller.js';
+import { createPlan, createPromotion, getAllPlansAdmin, linkRazorpayPlan, setPlanActiveStatus, updatePlan } from '@/controllers/admin.controller.js';
 import { authenticate, restrictTo } from '@/middleware/authenticate.js';
 import { validate } from '@/middleware/validate.js';
-import { updatePlanSchema } from '@/validators/admin.validator.js';
+import { setPlanActiveStatusSchema, updatePlanSchema } from '@/validators/admin.validator.js';
 import {Router} from 'express';
 
 const router = Router();
@@ -11,8 +11,10 @@ router.use(restrictTo('super_admin'));
 
 router.post('/promotions',createPromotion);
 router.post('/plans',createPlan);
-
+router.get('/plans', getAllPlansAdmin);
 // router.patch('/plans/:code/link-gateway' , validate(updatePlanSchema) , linkRazorpayPlan);
+
 router.patch('/plans/:code' , validate(updatePlanSchema) , updatePlan);
+router.patch('/plans/:code/status', validate(setPlanActiveStatusSchema), setPlanActiveStatus);
 
 export default router;

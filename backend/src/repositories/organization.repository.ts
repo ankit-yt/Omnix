@@ -127,6 +127,19 @@ class OrganizationRepository {
 
     await organization.save({ session });
   }
+
+  async syncCachedLimitsForPlan(
+  planCode: string,
+  limits: IOrganization['cachedLimits'],
+  session?: ClientSession
+): Promise<number> {
+  const result = await Organization.updateMany(
+    { cachedPlan: planCode },
+    { $set: { cachedLimits: limits } },
+    { session }
+  );
+  return result.modifiedCount;
+}
 }
 
 export default new OrganizationRepository();

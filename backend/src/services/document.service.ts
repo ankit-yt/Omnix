@@ -238,6 +238,7 @@ class DocumentService {
           sourceUrl:url,
           sourceType:'webpage',
           mimeType:'text/html',
+          fileSizeByte: sizeInBytes,
           status:'processing',
         },session);
 
