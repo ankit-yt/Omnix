@@ -3,12 +3,11 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import {
   X, ArrowUp,
-  Maximize2, Minimize2, ChevronLeft, ChevronRight, MessageSquare, MessageSquarePlus, Plus, Loader2 ,MessageCircle 
+  Maximize2, Minimize2, ChevronLeft, ChevronRight, MessageSquare,  Plus, Loader2 ,MessageCircle 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { GradientOrb } from './Gradientorb';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { useInfiniteScroll } from './useInfiniteScroll';
 
 type Message = {
@@ -407,9 +406,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
               </div>
 
               <div className="pointer-events-auto flex h-10 items-center gap-2.5 rounded-full bg-white px-4 shadow-sm ring-1 ring-black/[0.06]">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full text-white">
-                  <DotLottieReact src="/orb.json" loop autoplay />
-                </div>
+               
                 <span className="text-[14px] font-semibold tracking-tight text-gray-800">
                   {config.botName}
                 </span>

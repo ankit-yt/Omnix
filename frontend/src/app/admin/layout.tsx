@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Main Navigation */}
-          <nav className="space-y-1.5">
+          {/* <nav className="space-y-1.5">
             <NavItem
               href="/"
               icon={<LayoutDashboard className="h-4.5 w-4.5" />}
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               label="Copilot Engine"
               active={pathname?.includes("/chat")}
             />
-          </nav>
+          </nav> */}
 
           {/* Secondary Navigation */}
           <div className="mt-10">
@@ -85,12 +85,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 label="Billing & Limits"
                 active={pathname?.includes("/billing")}
               />
-              <NavItem
+              
+              {/* <NavItem
                 href="/settings"
                 icon={<Settings className="h-4.5 w-4.5" />}
                 label="Settings"
                 active={pathname?.includes("/settings")}
-              />
+              /> */}
             </nav>
           </div>
         </div>

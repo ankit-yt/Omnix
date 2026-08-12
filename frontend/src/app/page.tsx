@@ -1,7 +1,5 @@
-export default function page() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">ERP Genius</h1>
-    </main>
-  )
+import { MarketingPage } from "@/components/marketing/MarketingPage";
+
+export default function Page() {
+  return <MarketingPage />;
 }

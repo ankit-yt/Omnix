@@ -84,14 +84,14 @@ class WorkspaceService{
   }
 
   async deleteWorkspace(workspaceId:string , organizationId:string):Promise<void>{
-    const workspace = await this.getWorkspaceById(workspaceId , organizationId);
 
     const session = await mongoose.startSession();
     try{
        session.startTransaction();
 
-      await workspaceRepository.findByIdAndDelete(workspaceId , session);
+      await workspaceRepository.softDelete(workspaceId , session);
       await organizationRepository.updateWorkspaceCount(organizationId , -1, session);
+      session.commitTransaction();
     }catch(err){
       await session.abortTransaction();
       throw err;

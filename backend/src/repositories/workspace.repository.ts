@@ -5,6 +5,7 @@ import { IWorkspace, IWorkspaceDoc } from '@/models/base/types.js'
 import mongoose from 'mongoose'
 import { UpdateWorkspaceDto } from '@/validators/workspace.validator.js'
 import { UpdateCrawlingStatusDto } from '@/dtos/crawl.dto.js';
+
 class WorkspaceRepository {
 
   async create(data: Partial<IWorkspace>, session?: ClientSession): Promise<IWorkspaceDoc> {
@@ -13,34 +14,57 @@ class WorkspaceRepository {
   }
 
   async findByOrganization(orgId: string): Promise<IWorkspace[]> {
-    return Workspace.find({ organization: orgId }).lean()
+    return Workspace.find({ organization: orgId, isDeleted: false }).lean()
   }
 
   async findById(workspaceId: string): Promise<IWorkspace | null> {
-    return Workspace.findById(workspaceId).lean()
+    return Workspace.findOne({ _id: workspaceId, isDeleted: false }).lean()
   }
 
   async findByIdToUpdate(workspaceId: string): Promise<IWorkspaceDoc | null> {
-    return Workspace.findById(workspaceId)
+    return Workspace.findOne({ _id: workspaceId, isDeleted: false })
   }
-
 
   async findByIdAndUpdate(workspaceId: string, data: UpdateWorkspaceDto, session?: ClientSession): Promise<IWorkspaceDoc | null> {
-    return Workspace.findByIdAndUpdate(workspaceId, data, { returnDocument: 'after', runValidators: true, session });
+    return Workspace.findOneAndUpdate(
+      { _id: workspaceId, isDeleted: false },
+      data,
+      { returnDocument: 'after', runValidators: true, session }
+    );
   }
 
-  async findByIdAndDelete(workspaceId: string, session?: ClientSession): Promise<IWorkspaceDoc | null> {
+  // Soft delete: flags the workspace instead of removing it from Mongo
+  async softDelete(workspaceId: string, session?: ClientSession): Promise<IWorkspaceDoc | null> {
+    return Workspace.findOneAndUpdate(
+      { _id: workspaceId, isDeleted: false },
+      { $set: { isDeleted: true, isActive: false, deletedAt: new Date() } },
+      { returnDocument: 'after', session }
+    );
+  }
+
+  // Optional: restore a soft-deleted workspace
+  async restore(workspaceId: string, session?: ClientSession): Promise<IWorkspaceDoc | null> {
+    return Workspace.findOneAndUpdate(
+      { _id: workspaceId, isDeleted: true },
+      { $set: { isDeleted: false }, $unset: { deletedAt: '' } },
+      { returnDocument: 'after', session }
+    );
+  }
+
+  // Permanent removal — only use for hard-delete admin/cleanup flows, not the normal delete path
+  async hardDelete(workspaceId: string, session?: ClientSession): Promise<IWorkspaceDoc | null> {
     return Workspace.findByIdAndDelete(workspaceId, { session });
   }
 
   async existsByOrganization(orgId: string): Promise<boolean> {
-    const workspace = await Workspace.exists({ organization: orgId });
+    const workspace = await Workspace.exists({ organization: orgId, isDeleted: false });
     return workspace != null;
   }
 
   async countByOrganization(orgId: string): Promise<number> {
     return Workspace.countDocuments({
       organization: orgId,
+      isDeleted: false,
     })
   }
 
@@ -48,6 +72,7 @@ class WorkspaceRepository {
     const filter: mongoose.QueryFilter<IWorkspaceDoc> = {
       organization: orgId,
       name,
+      isDeleted: false,
     }
 
     if (excludeWorkspaceId) {
@@ -61,8 +86,8 @@ class WorkspaceRepository {
 
   // Record a message usage for the workspace
   async recordMessageUsage(workspaceId: string, session?: mongoose.ClientSession): Promise<void> {
-    await Workspace.findByIdAndUpdate(
-      workspaceId,
+    await Workspace.findOneAndUpdate(
+      { _id: workspaceId, isDeleted: false },
       {
         $inc: {
           'usage.messagesThisMonth': 1,
@@ -74,8 +99,8 @@ class WorkspaceRepository {
   }
 
   async updateCrawlingStatus(workspaceId: string, data: UpdateCrawlingStatusDto, session?: ClientSession): Promise<IWorkspaceDoc | null> {
-    return Workspace.findByIdAndUpdate(
-      workspaceId,
+    return Workspace.findOneAndUpdate(
+      { _id: workspaceId, isDeleted: false },
       {
         $set: {
           ...(data.status !== undefined && {
@@ -101,7 +126,7 @@ class WorkspaceRepository {
   }
 
   async deactivateExcessWorkspaces(organizationId: string, session?: ClientSession): Promise<number> {
-     const firstWorkspace = await Workspace.findOne(
+    const firstWorkspace = await Workspace.findOne(
       {
         organization: organizationId,
         isDeleted: false,

@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 const { isInitialized } = useAuthStore();;
   const { isHistoryView, setHistoryView, activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const isChatPage = pathname === "/dashboard/chat";
+  const isChatPage = pathname === "/chat";
 
   useEffect(() => {
     async function fetchSessions() {
@@ -163,20 +163,20 @@ if (backendUnreachable) {
                   active={pathname === "/"}
                 />
                 <NavItem
-                  href="/dashboard/documents"
+                  href="/documents"
                   icon={<Database className="h-4.5 w-4.5" />}
                   label="Knowledge Base"
                   active={pathname?.includes("/documents")}
                 />
                 <NavItem
-                  href="/dashboard/chat"
+                  href="/chat"
                   icon={<MessageSquare className="h-4.5 w-4.5" />}
                   label="Copilot Engine"
                   active={pathname?.includes("/chat")}
                 />
 
                 <NavItem
-                  href="/dashboard/workspaces"
+                  href="/workspaces"
                   icon={<MessageSquare className="h-4.5 w-4.5" />}
                   label="Workspaces"
                   active={pathname?.includes("/workspace")}
@@ -188,17 +188,12 @@ if (backendUnreachable) {
                 <h3 className="mb-3 px-4 text-[11px] font-medium tracking-wider text-white/30 uppercase">Preferences</h3>
                 <nav className="space-y-1.5">
                   <NavItem
-                    href="/dashboard/billing"
+                    href="/billing"
                     icon={<CreditCard className="h-4.5 w-4.5" />}
                     label="Billing & Limits"
                     active={pathname?.includes("/billing")}
                   />
-                  <NavItem
-                    href="/settings"
-                    icon={<Settings className="h-4.5 w-4.5" />}
-                    label="Settings"
-                    active={pathname?.includes("/settings")}
-                  />
+                
                 </nav>
               </div>
             </div>
