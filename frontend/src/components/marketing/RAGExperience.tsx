@@ -68,12 +68,38 @@ export function RAGExperience() {
         />
 
         <div className="relative mx-auto aspect-square w-full max-w-[480px]">
-          <svg viewBox="0 0 400 280" className="absolute inset-0 h-full w-full text-[color:var(--accent)]/60">
-            <ConnectorLine d="M40,60 C120,110 160,140 200,140" ref={(el) => (lineRefs.current[0] = el)} />
-            <ConnectorLine d="M320,50 C260,110 220,140 200,140" ref={(el) => (lineRefs.current[1] = el)} />
-            <ConnectorLine d="M30,215 C110,180 160,160 200,140" ref={(el) => (lineRefs.current[2] = el)} />
-            <ConnectorLine d="M330,225 C260,185 220,160 200,140" ref={(el) => (lineRefs.current[3] = el)} />
-          </svg>
+       <svg
+  viewBox="0 0 400 280"
+  className="absolute inset-0 h-full w-full text-[color:var(--accent)]/60"
+>
+  <ConnectorLine
+    d="M40,60 C120,110 160,140 200,140"
+    ref={(el) => {
+      lineRefs.current[0] = el;
+    }}
+  />
+
+  <ConnectorLine
+    d="M320,50 C260,110 220,140 200,140"
+    ref={(el) => {
+      lineRefs.current[1] = el;
+    }}
+  />
+
+  <ConnectorLine
+    d="M30,215 C110,180 160,160 200,140"
+    ref={(el) => {
+      lineRefs.current[2] = el;
+    }}
+  />
+
+  <ConnectorLine
+    d="M330,225 C260,185 220,160 200,140"
+    ref={(el) => {
+      lineRefs.current[3] = el;
+    }}
+  />
+</svg>
 
           {SOURCES.map((s) => (
             <div
