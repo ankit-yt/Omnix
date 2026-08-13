@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useRef, useState } from "react";
 
 const MAX_RETRIES = 5;
-const BASE_DELAY_MS = 1500; // 1.5s, 3s, 6s, 12s, 24s...
+const BASE_DELAY_MS = 1500;
 
 export function useInitializeAuth() {
   const {
@@ -24,20 +24,14 @@ export function useInitializeAuth() {
     let cancelled = false;
 
     const isNetworkError = (error: any) => {
-      // Axios sets error.response only when the server actually responded.
-      // No response => network error, timeout, CORS, DNS failure, server down, etc.
       return !error?.response;
     };
 
     const scheduleRetry = () => {
       if (cancelled) return;
-
       retryCountRef.current += 1;
 
       if (retryCountRef.current > MAX_RETRIES) {
-        // Give up trying silently — stop the infinite loader,
-        // but flag it so UI can show a "can't reach server" state
-        // instead of silently treating the user as logged out.
         setBackendUnreachable(true);
         setInitialized();
         return;
@@ -49,6 +43,19 @@ export function useInitializeAuth() {
       }, delay);
     };
 
+    // Helper to handle forced logouts without flashing the UI
+    const handleUnauthorized = () => {
+      logout();
+      if (!cancelled && window.location.pathname !== "/login") {
+        // Force redirect AND STOP. 
+        // Do NOT call setInitialized() here, so the loading screen stays up.
+        window.location.replace("/login");
+      } else {
+        // Only initialize if we are already on the login page
+        setInitialized();
+      }
+    };
+
     const initialize = async () => {
       if (isInitialized || user) return;
 
@@ -56,30 +63,22 @@ export function useInitializeAuth() {
         .split("; ")
         .some((cookie) => cookie === "is_logged_in=true");
 
+      // FIX 1: Actually redirect if the cookie is missing
       if (!isLoggedIn) {
-        setInitialized();
+        handleUnauthorized();
         return;
       }
 
       try {
         const refreshRes = await authService.refresh();
 
-        if (!refreshRes) {
-          logout();
-          setInitialized();
-
-          if (!cancelled && window.location.pathname !== "/login") {
-            window.location.replace("/login");
-          }
+        // FIX 2: Use the helper to prevent state-update flashes
+        if (!refreshRes || !refreshRes.accessToken) {
+          handleUnauthorized();
           return;
         }
 
         const token = refreshRes.accessToken;
-
-        if (!token) {
-          throw new Error("Refresh response did not contain accessToken");
-        }
-
         setToken(token);
 
         const meRes = await api.get("/auth/me");
@@ -95,28 +94,20 @@ export function useInitializeAuth() {
         if (cancelled) return;
 
         if (isNetworkError(error)) {
-          // Backend is down / unreachable — DO NOT setInitialized here.
-          // Keep the loader up and retry with backoff instead.
           scheduleRetry();
           return;
         }
-
-        // Real auth failure (4xx/5xx from a server that IS responding)
-        setInitialized();
 
         const status =
           (error as any)?.response?.status ??
           (error as any)?.status;
 
+        // FIX 3: Route 401/403s through the flash-preventing helper
         if (status === 401 || status === 403) {
-          logout();
-
-          if (window.location.pathname !== "/login") {
-            window.location.replace("/login");
-          }
+          handleUnauthorized();
         } else {
-          // Unexpected server error (5xx etc.) — don't log the user out,
-          // just stop blocking the UI.
+          // Unexpected 5xx error — stop blocking the UI, let them see the error state
+          setInitialized();
         }
       }
     };

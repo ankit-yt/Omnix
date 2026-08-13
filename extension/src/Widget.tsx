@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import {
   X, ArrowUp,
-  Maximize2, Minimize2, ChevronLeft, ChevronRight, MessageSquare,  Plus, Loader2 ,MessageCircle 
+  Maximize2, Minimize2, ChevronLeft, ChevronRight, MessageSquare, Plus, Loader2, MessageCircle
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -65,7 +65,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
   const historyScrollRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
 
-  const API_BASE_URL = 'http://localhost:5001/api/public/widget';
+  const API_BASE_URL = 'https://omnix-r4za.onrender.com/api/public/widget';
   const SPRING = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const BACK_OUT = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
   const FAB_ANIM_MS = 240;
@@ -406,7 +406,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
               </div>
 
               <div className="pointer-events-auto flex h-10 items-center gap-2.5 rounded-full bg-white px-4 shadow-sm ring-1 ring-black/[0.06]">
-               
+
                 <span className="text-[14px] font-semibold tracking-tight text-gray-800">
                   {config.botName}
                 </span>
@@ -429,7 +429,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
 
           {view === 'history' && (
             <div ref={historyScrollRef} className="flex-1 overflow-y-auto bg-white flex flex-col pt-20">
-              
+
               {/* Header Title Section */}
               <div className="flex items-center justify-between px-5 pb-4 pt-2">
                 <div>
@@ -473,7 +473,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
                         className="group flex w-full items-start gap-3 border-b border-gray-50 px-5 py-3.5 text-left transition-colors hover:bg-gray-50/80"
                       >
                         <div className="mt-0.5 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600">
-                         <MessageCircle  className="w-4 h-4 mt-2" />
+                          <MessageCircle className="w-4 h-4 mt-2" />
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -522,7 +522,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
                   className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{ backgroundColor: primaryColor }}
                 >
-                 <MessageCircle  className="w-4 h-4" />
+                  <MessageCircle className="w-4 h-4" />
                   New conversation
                 </button>
               </div>

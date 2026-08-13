@@ -33,7 +33,8 @@ export default function LoginPage() {
       const data = await authService.login({ email, password });
       setAuth(data.data.user, data.accessToken);
       const callbackUrl = searchParams.get("callbackUrl");
-      router.push(callbackUrl ?? "/dashboard");
+      console.log('redirecting')
+      router.replace(callbackUrl ?? "/dashboard");
 
     } catch (error:any) {
       console.error("Login failed", error.response);
