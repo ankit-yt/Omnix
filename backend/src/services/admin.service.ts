@@ -1,4 +1,4 @@
-import { IPlan, IPromotion } from '@/models/base/types.js';
+import { IOrganization, IPlan, IPromotion } from '@/models/base/types.js';
 import organizationRepository from '@/repositories/organization.repository.js';
 import planRepository from '@/repositories/plan.repository.js';
 import promotionRepository from '@/repositories/promotion.repository.js';
@@ -69,7 +69,7 @@ class AdminService {
     return updatedPlan;
   }
 
-  async updatePlan(adminUserId: string, planCode: string, dto: updatePlanDto) {
+  async updatePlan(adminUserId: string, planCode: IOrganization['cachedPlan'], dto: updatePlanDto) {
     const plan = await planRepository.findByCode(planCode);
     if (!plan) {
       throw new AppError(`Plan with code '${planCode}' not found.`, 404);

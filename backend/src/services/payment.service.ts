@@ -179,7 +179,7 @@ class PaymentService {
             razorPaySubscriptionId: rzpSubscriptionId,
             lockedLimits: plan.limits,
             payments: subscriptionOrder ? [subscriptionOrder._id] : [],
-            lastPayment: subscriptionOrder ? subscriptionOrder._id : null,
+            lastPayment: subscriptionOrder ? subscriptionOrder._id : undefined,
             history: [{
               event: 'activated',
               toPlan: plan.code,
