@@ -133,7 +133,11 @@ export default function DocumentsPage() {
         filename = `${filename.replace(/[^a-z0-9]/gi, '_')}.txt`;
       }
 
-      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+     const blob = new Blob([response.data], {
+type: String(
+  response.headers["content-type"] ?? "application/octet-stream"
+),
+});
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
