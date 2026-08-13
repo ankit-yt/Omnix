@@ -32,7 +32,7 @@ export const sendRefreshToken = (res:Response,refreshToken:string):void=>{
   res.cookie('refreshToken',refreshToken,{
     httpOnly:true,
     secure:process.env.NODE_ENV === 'production',
-    sameSite:'strict',
+    sameSite:'none',
     maxAge:7*24*60*60*1000
   })
 }
@@ -41,7 +41,7 @@ export const sendLoggedInIndicator = (res: Response): void => {
   res.cookie('is_logged_in', 'true', {
     httpOnly: false, 
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 };
@@ -72,12 +72,12 @@ export const clearAuthCookie = (res:Response):void=>{
   res.clearCookie('refreshToken',{
     httpOnly:true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    sameSite: 'none'
   })
 
   res.clearCookie('is_logged_in',{
      httpOnly:true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    sameSite: 'none'
   })
 }
