@@ -149,7 +149,9 @@ export const deleteDocument = asyncHandler(async (req: Request, res: Response) =
   // Send the file back as an attachment
   res.setHeader('Content-Type', mimeType || 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-  res.setHeader('Content-Length', buffer.length);
+  if(buffer){
+    res.setHeader('Content-Length', buffer.length);
+  }
 
   res.status(200).send(buffer);
 });

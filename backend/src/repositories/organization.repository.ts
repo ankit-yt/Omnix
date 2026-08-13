@@ -129,7 +129,7 @@ class OrganizationRepository {
   }
 
   async syncCachedLimitsForPlan(
-  planCode: string,
+  planCode: IOrganization['cachedPlan'],
   limits: IOrganization['cachedLimits'],
   session?: ClientSession
 ): Promise<number> {

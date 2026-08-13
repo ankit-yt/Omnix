@@ -1,6 +1,6 @@
 import mongoose, { ClientSession } from "mongoose";
 import { PaymentOrder } from '@/models/base/index.js'
-import { IPaymentOrder, IPaymentOrderDoc } from '@/models/base/types.js'
+import { IPaymentOrder, IPaymentOrderDoc } from "@/models/PaymentOrder.js";
 
 class PaymentOrderRepository {
 
