@@ -1,3 +1,4 @@
+import { IOrganization } from "@/models/Organization.js";
 import adminService from "@/services/admin.service.js";
 import AppError from "@/utils/AppError.js";
 import asyncHandler from "@/utils/asyncHandler.js";
@@ -76,7 +77,7 @@ export const updatePlan = asyncHandler(async (req: Request, res: Response) => {
   const adminId = req.user?._id?.toString();
   if (!adminId) throw new AppError('Unauthorized.', 401);
 
-  const updatePlan = await adminService.updatePlan(adminId, req.params.code as string, req.body);
+  const updatePlan = await adminService.updatePlan(adminId, req.params.code as IOrganization['cachedPlan'], req.body);
 
   res.status(200).json({
     status: 'success',
