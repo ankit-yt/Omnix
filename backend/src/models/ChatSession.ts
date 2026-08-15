@@ -47,10 +47,9 @@ const ChatSessionSchema = new Schema<IChatSessionDoc>({
     ref: "Workspace",
     required: true,
   },
-  
+
   visitorId: {
     type: String,
-    required: true,
     trim: true,
     index: true,
   },
@@ -65,7 +64,6 @@ const ChatSessionSchema = new Schema<IChatSessionDoc>({
   page: {
     url: {
       type: String,
-      required: true,
       trim: true,
     },
 

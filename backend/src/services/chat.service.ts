@@ -169,12 +169,12 @@ Return ONLY the updated summary text.
         {
           title: "New Conversation",
           page: {
-            url: dto.page.url,
-            title: dto.page.title,
+           url: dto.page?.url || "",
+    title: dto.page?.title || "",
           },
           visitorId: dto.visitorId,
           client: {
-            userAgent: dto.client.userAgent,
+            userAgent: dto.client?.userAgent || "",
           },
         });
 
@@ -265,7 +265,7 @@ ${dto.content}
           role: 'assistant',
           content: answer,
           metadata: {
-            pageUrl: dto.page.url || '',
+            pageUrl: dto.page?.url || '',
             screenshotAnalysis: '',
             sourceChunks: sourceChunkIds,
             citations,

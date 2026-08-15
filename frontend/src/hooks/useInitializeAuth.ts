@@ -47,6 +47,7 @@ export function useInitializeAuth() {
     // Helper to handle forced logouts without flashing the UI
     const handleUnauthorized = () => {
       logout();
+      Cookies.remove("refreshToken", { path: "/" });
       if (!cancelled && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
         
         window.location.replace("/login");
