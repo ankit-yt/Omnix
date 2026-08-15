@@ -67,9 +67,6 @@ if (err.name === "JsonWebTokenError") {
   err = new AppError("Invalid access token.", 401);
 }
 
-  if(err.statusCode === 401){
-    clearAuthCookie(res);
-  }
 
   if(process.env.NODE_ENV == 'development'){
     sendDevError(err , res)
