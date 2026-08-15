@@ -1,9 +1,7 @@
 import { authService } from "@/services/auth.service";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export function useLogout() {
-  const router = useRouter();
   const clearStore = useAuthStore((state) => state.logout);
 
   const logout = async () => {
@@ -14,7 +12,7 @@ export function useLogout() {
     } finally {
       clearStore();
 
-      router.replace("/");
+      window.location.replace("/")
     }
   };
 
