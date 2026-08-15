@@ -13,6 +13,7 @@ console.log(result);
     status:'success',
     message:'Registration successful',
     accessToken:result.accessToken,
+    refreshToken: result.refreshToken,
     data:result.data,
   })
 })
@@ -31,14 +32,14 @@ export const login = asyncHandler(async(req:Request, res:Response)=>{
     status:'success',
     message:'Login successful',
     accessToken : result.accessToken,
+    refreshToken: result.refreshToken,
     data:result.data
   })
 })
 
 export const refresh = asyncHandler(async(req:Request,res:Response)=>{
-  const token = req.cookies?.refreshToken;
-
-  const result = await authService.refresh(token);
+  const { refreshToken } = req.body; 
+  const result = await authService.refresh(refreshToken);
 
   res.status(200).json({
     status:'success',
@@ -47,9 +48,9 @@ export const refresh = asyncHandler(async(req:Request,res:Response)=>{
 })
 
 export const logout = asyncHandler(async(req:Request , res:Response)=>{
-  const token = req.cookies?.refreshToken;
+  const { refreshToken } = req.body;
 
-  await authService.logout(token,res);
+  await authService.logout(refreshToken as string);
 
   res.status(200).json({
     status:'success',

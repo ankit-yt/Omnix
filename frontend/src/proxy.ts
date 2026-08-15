@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+]
 
+// MUST be named `middleware`, not `proxy`
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) =>
-      pathname === route ||
-      pathname.startsWith(`${route}/`)
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+    pathname.startsWith(route) || pathname == "/"
   );
 
-  if (isPublicRoute) {
-    return NextResponse.next();
+  const hasRefreshToken = request.cookies.has("refreshToken");
+  
+  if (isPublicRoute && hasRefreshToken) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
+  };
+
+  if (!isPublicRoute && !hasRefreshToken) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callback", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

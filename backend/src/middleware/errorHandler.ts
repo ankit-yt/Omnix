@@ -1,5 +1,4 @@
 import AppError from '@/utils/AppError.js';
-import { clearAuthCookie } from '@/utils/generateToken.js';
 import {NextFunction, Response , Request  , ErrorRequestHandler} from 'express'
 import { error } from 'winston';
 

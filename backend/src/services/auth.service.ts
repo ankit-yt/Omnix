@@ -5,11 +5,11 @@ import userRepository from "@/repositories/user.repository.js";
 import workspaceRepository from "@/repositories/workspace.repository.js";
 import { AuthResult, RegisterInput } from "@/types/auth.types.js";
 import AppError from "@/utils/AppError.js";
-import { clearAuthCookie, generateAccessToken, generateRefreshToken, sendLoggedInIndicator, sendRefreshToken, verifyRefreshToken } from "@/utils/generateToken.js";
 import crypto from 'crypto'
 import mongoose from "mongoose";
 import { Response } from 'express'
 import { IUser } from "@/models/User.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/generateToken.js";
 class AuthService {
 
   private generateSlug(name: string): string {
@@ -121,11 +121,10 @@ class AuthService {
     const refreshToken = generateRefreshToken(user);
 
     await userRepository.updateRefreshToken(user._id.toString(), refreshToken);
-    sendRefreshToken(res, refreshToken);
-    sendLoggedInIndicator(res);
 
     return {
       accessToken,
+      refreshToken,
       data: {
         user,
         organization,
@@ -161,10 +160,9 @@ class AuthService {
     const refreshToken = generateRefreshToken(user)
 
     await userRepository.updateRefreshToken(user._id!.toString(), refreshToken);
-    sendRefreshToken(res, refreshToken);
-    sendLoggedInIndicator(res);
 
     return {
+      refreshToken,
       accessToken,
       data: { user },
     }
@@ -185,12 +183,10 @@ class AuthService {
     return { accessToken };
   }
 
-  async logout(token: string | undefined, res: Response): Promise<void> {
+  async logout(token: string | undefined): Promise<void> {
     if (token) {
       await userRepository.clearRefreshToken(token)
     }
-
-    clearAuthCookie(res);
   }
 
   async getMe(userId: string): Promise<{ user: IUser }> {

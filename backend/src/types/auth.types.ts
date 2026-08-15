@@ -12,7 +12,8 @@ export interface RegisterInput{
 }
 
 export interface AuthResult{
-  accessToken:string,
+  accessToken:string;
+  refreshToken: string;
   data:{
     user:IUser;
     organization?:IOrganization;
