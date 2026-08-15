@@ -1,7 +1,8 @@
 import { api } from "@/lib/api";
-import { authService } from "@/services/auth.service";
+import { authService } from "@/services/auth.service"; // adjust if needed
 import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useRef, useState } from "react";
+import Cookies from "js-cookie";
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1500;
@@ -46,12 +47,12 @@ export function useInitializeAuth() {
     // Helper to handle forced logouts without flashing the UI
     const handleUnauthorized = () => {
       logout();
-      if (!cancelled && window.location.pathname !== "/login") {
+      if (!cancelled && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
         // Force redirect AND STOP. 
         // Do NOT call setInitialized() here, so the loading screen stays up.
         window.location.replace("/login");
       } else {
-        // Only initialize if we are already on the login page
+        // Only initialize if we are already on a public page
         setInitialized();
       }
     };
@@ -59,12 +60,10 @@ export function useInitializeAuth() {
     const initialize = async () => {
       if (isInitialized || user) return;
 
-      const isLoggedIn = document.cookie
-        .split("; ")
-        .some((cookie) => cookie === "is_logged_in=true");
+      // UPDATED: Check for the refreshToken cookie managed by js-cookie
+      const hasRefreshToken = !!Cookies.get("refreshToken");
 
-      // FIX 1: Actually redirect if the cookie is missing
-      if (!isLoggedIn) {
+      if (!hasRefreshToken) {
         handleUnauthorized();
         return;
       }
@@ -72,7 +71,6 @@ export function useInitializeAuth() {
       try {
         const refreshRes = await authService.refresh();
 
-        // FIX 2: Use the helper to prevent state-update flashes
         if (!refreshRes || !refreshRes.accessToken) {
           handleUnauthorized();
           return;
@@ -102,7 +100,6 @@ export function useInitializeAuth() {
           (error as any)?.response?.status ??
           (error as any)?.status;
 
-        // FIX 3: Route 401/403s through the flash-preventing helper
         if (status === 401 || status === 403) {
           handleUnauthorized();
         } else {
