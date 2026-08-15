@@ -19,10 +19,7 @@ export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <head>
-        <Script
-  src="https://omnix-r4za.onrender.com/widget.js"
-  data-workspace-id="6a74a84ecdc5133dad8c5f5d"
-/>
+        
       </head>
       <body className={inter.className}>
         

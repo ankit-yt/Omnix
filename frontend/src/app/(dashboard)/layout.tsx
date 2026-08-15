@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const logout = useLogout();
   const { backendUnreachable } = useInitializeAuth();
-  const { isInitialized } = useAuthStore();
+  const { isInitialized ,user} = useAuthStore();
   const { isHistoryView, setHistoryView, activeSessionId, setActiveSessionId, activeWorkspaceId, setActiveWorkspaceId } = useChatStore();
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const isChatPage = pathname === "/chat";
@@ -241,8 +241,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="text-sm font-medium text-white">A</span>
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-[13px] font-medium text-white transition-colors">Ankit</p>
-              <p className="truncate text-[11px] text-white/40">Pro Specialist</p>
+               <p className="truncate text-[13px] font-medium text-white transition-colors">{user?.name}</p>
+              <p className="truncate text-[11px] text-white/40">{user?.organization.cachedPlan}</p>
             </div>
             <LogOut onClick={logout} className="h-4 w-4 shrink-0 text-white/30 transition-colors group-hover:text-white" />
           </div>

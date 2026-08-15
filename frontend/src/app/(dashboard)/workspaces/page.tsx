@@ -149,18 +149,18 @@ export default function WorkspacesPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-8 lg:p-12">
+    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-8 lg:p-12">
       {/* Header Section */}
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <header className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-medium tracking-tight text-white">Workspaces</h1>
-          <p className="mt-1.5 text-sm text-white/40">
+          <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">Workspaces</h1>
+          <p className="mt-1.5 text-xs sm:text-sm text-white/40">
             Manage your organization's workspaces, customize bot appearances, and monitor usage limits.
           </p>
         </div>
         <button
           onClick={openCreateModal}
-          className="group flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition-all hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-95"
+          className="group flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 sm:py-2 text-sm font-medium text-black transition-all hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-95"
         >
           <Plus className="h-4 w-4" />
           Create Workspace
@@ -169,7 +169,7 @@ export default function WorkspacesPage() {
 
       {/* Workspaces Grid */}
       {workspaces.length === 0 ? (
-        <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] py-16 text-center backdrop-blur-xl">
+        <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] py-16 px-4 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
             <LayoutGrid className="h-5 w-5 text-white/40" />
           </div>
@@ -279,15 +279,24 @@ export default function WorkspacesPage() {
 
       {/* Create/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/80 px-4 py-8 backdrop-blur-sm transition-all overflow-y-auto">
-          <div className="relative w-full max-w-lg animate-[rise_0.3s_ease-out_both] rounded-[24px] bg-[#0c0e17] ring-1 ring-white/10 shadow-2xl my-auto overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/80 px-3 sm:px-4 py-4 sm:py-8 backdrop-blur-sm transition-all overflow-y-auto">
+          <div className="relative w-full max-w-lg max-h-full animate-[rise_0.3s_ease-out_both] rounded-[20px] sm:rounded-[24px] bg-[#0c0e17] ring-1 ring-white/10 shadow-2xl my-auto overflow-hidden flex flex-col">
             
             <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-white/5 blur-3xl pointer-events-none"></div>
 
-            <div className="relative p-6 sm:p-8">
-              <h3 className="mb-5 text-xl font-medium tracking-tight text-white">
-                {editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}
-              </h3>
+            <div className="relative p-5 sm:p-8 overflow-y-auto">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-medium tracking-tight text-white">
+                  {editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="sm:hidden rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
               <form id="workspace-form" onSubmit={handleSave} className="space-y-5">
                 <div className="space-y-1.5">
@@ -316,7 +325,7 @@ export default function WorkspacesPage() {
                 <div className="border-t border-white/5 pt-5">
                   <h4 className="mb-4 text-sm font-medium text-white">Bot Settings</h4>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[13px] font-medium text-white/60">Bot Name</label>
                       <input
@@ -339,9 +348,9 @@ export default function WorkspacesPage() {
                             ...formData,
                             settings: { ...formData.settings, primaryColor: e.target.value }
                           })}
-                          className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
+                          className="h-7 w-8 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0"
                         />
-                        <span className="font-mono text-xs uppercase text-white/50">{formData.settings.primaryColor}</span>
+                        <span className="font-mono text-xs uppercase text-white/50 truncate">{formData.settings.primaryColor}</span>
                       </div>
                     </div>
                   </div>
@@ -363,7 +372,7 @@ export default function WorkspacesPage() {
                 {/* --- NEW: Allowed Domains UI --- */}
                 <div className="space-y-1.5 pt-2">
                   <label className="text-[13px] font-medium text-white/60">Allowed Domains (Whitelisting)</label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={domainInput}
@@ -391,13 +400,13 @@ export default function WorkspacesPage() {
                       {formData.allowedDomains.map((domain) => (
                         <span 
                           key={domain} 
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white ring-1 ring-white/10"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-xs text-white ring-1 ring-white/10 max-w-full"
                         >
-                          {domain}
+                          <span className="truncate max-w-[180px]">{domain}</span>
                           <button 
                             type="button" 
                             onClick={() => handleRemoveDomain(domain)} 
-                            className="text-white/40 transition-colors hover:text-red-400"
+                            className="shrink-0 text-white/40 transition-colors hover:text-red-400"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -411,7 +420,7 @@ export default function WorkspacesPage() {
               </form>
             </div>
 
-            <div className="relative flex gap-3 border-t border-white/5 bg-white/[0.02] p-6">
+            <div className="relative flex gap-3 border-t border-white/5 bg-white/[0.02] p-4 sm:p-6 shrink-0">
               <button
                 type="button"
                 onClick={closeModal}

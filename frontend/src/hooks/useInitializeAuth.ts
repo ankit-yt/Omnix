@@ -48,11 +48,9 @@ export function useInitializeAuth() {
     const handleUnauthorized = () => {
       logout();
       if (!cancelled && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-        // Force redirect AND STOP. 
-        // Do NOT call setInitialized() here, so the loading screen stays up.
+        
         window.location.replace("/login");
       } else {
-        // Only initialize if we are already on a public page
         setInitialized();
       }
     };
@@ -80,7 +78,7 @@ export function useInitializeAuth() {
         setToken(token);
 
         const meRes = await api.get("/auth/me");
-
+        console.log(meRes)
         if (cancelled) return;
 
         setAuth(meRes.data.data, token);

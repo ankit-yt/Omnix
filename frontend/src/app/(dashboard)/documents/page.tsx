@@ -162,32 +162,32 @@ type: String(
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden p-8 lg:p-12">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex h-full flex-col overflow-hidden p-4 sm:p-8 lg:p-12">
+      <header className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-medium tracking-tight text-white">Knowledge Base</h1>
-          <p className="mt-2 text-sm text-white/40">Manage the documents and websites powering your AI Copilot.</p>
+          <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">Knowledge Base</h1>
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-white/40">Manage the documents and websites powering your AI Copilot.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setIsCrawlModalOpen(true)}
-            className="group flex items-center gap-2 rounded-2xl bg-white/5 px-5 py-2.5 text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 active:scale-95"
+            className="group flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-2xl bg-white/5 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 active:scale-95"
           >
-            <Globe className="h-4 w-4" />
-            Crawl Website
+            <Globe className="h-4 w-4 shrink-0" />
+            <span className="whitespace-nowrap">Crawl Website</span>
           </button>
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="group flex items-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-medium text-black transition-all hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-95"
+            className="group flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-2xl bg-white px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-medium text-black transition-all hover:bg-white/90 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-95"
           >
-            <UploadCloud className="h-4 w-4" />
-            Upload File
+            <UploadCloud className="h-4 w-4 shrink-0" />
+            <span className="whitespace-nowrap">Upload File</span>
           </button>
         </div>
       </header>
 
-      <div className="mb-6 flex items-center gap-4">
-        <div className="relative max-w-md flex-1">
+      <div className="mb-4 sm:mb-6 flex items-center gap-4">
+        <div className="relative w-full sm:max-w-md flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
           <input
             type="text"
@@ -199,87 +199,159 @@ type: String(
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto rounded-3xl bg-white/[0.02] ring-1 ring-white/[0.05] backdrop-blur-xl">
+      <div className="flex-1 overflow-y-auto rounded-2xl sm:rounded-3xl bg-white/[0.02] ring-1 ring-white/[0.05] backdrop-blur-xl">
         {isLoading ? (
           <div className="flex h-40 items-center justify-center text-white/40 text-sm">
             Loading knowledge base...
           </div>
         ) : allDisplayItems.length === 0 ? (
-          <div className="flex h-40 items-center justify-center text-white/40 text-sm">
+          <div className="flex h-40 items-center justify-center text-white/40 text-sm px-4 text-center">
             {searchQuery ? "No documents match your search." : "No documents or websites added yet."}
           </div>
         ) : (
-          <table className="w-full text-left text-sm text-white/70">
-            <thead className="sticky top-0 z-10 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md">
-              <tr>
-                <th className="px-6 py-4 font-medium text-white/40">Source Name</th>
-                <th className="px-6 py-4 font-medium text-white/40">Workspace</th>
-                <th className="px-6 py-4 font-medium text-white/40">Size</th>
-                <th className="px-6 py-4 font-medium text-white/40">Status</th>
-                <th className="px-6 py-4 text-right font-medium text-white/40">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {allDisplayItems.map((doc) => (
-                <tr key={doc._id} className="transition-colors hover:bg-white/[0.02]">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
-                        {doc.sourceType === 'webpage' ? (
-                          <Globe className={`h-4 w-4 ${doc.isVirtualCrawl ? 'text-blue-400 animate-pulse' : 'text-white'}`} />
+          <>
+            {/* --- Desktop / tablet table view --- */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-sm text-white/70">
+                <thead className="sticky top-0 z-10 border-b border-white/5 bg-[#070912]/80 backdrop-blur-md">
+                  <tr>
+                    <th className="px-6 py-4 font-medium text-white/40">Source Name</th>
+                    <th className="px-6 py-4 font-medium text-white/40">Workspace</th>
+                    <th className="px-6 py-4 font-medium text-white/40">Size</th>
+                    <th className="px-6 py-4 font-medium text-white/40">Status</th>
+                    <th className="px-6 py-4 text-right font-medium text-white/40">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {allDisplayItems.map((doc) => (
+                    <tr key={doc._id} className="transition-colors hover:bg-white/[0.02]">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+                            {doc.sourceType === 'webpage' ? (
+                              <Globe className={`h-4 w-4 ${doc.isVirtualCrawl ? 'text-blue-400 animate-pulse' : 'text-white'}`} />
+                            ) : (
+                              <FileText className="h-4 w-4 text-white" />
+                            )}
+                          </div>
+                          <div className="flex flex-col max-w-xs">
+                            <span className="font-medium text-white truncate max-w-[250px]" title={doc.title || doc.fileName || doc.originalFileName}>
+                              {doc.title || doc.fileName || doc.originalFileName}
+                            </span>
+                            {doc.sourceType === 'webpage' && doc.sourceUrl && (
+                              <span className="text-xs text-white/40 truncate max-w-[250px] flex items-center gap-1 mt-0.5">
+                                <LinkIcon className="h-3 w-3" /> {doc.sourceUrl}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{getWorkspaceName(doc.workspace || doc.workspaceId)}</td>
+                      <td className="px-6 py-4">{formatSize(doc.fileSizeByte)}</td>
+                      <td className="px-6 py-4">
+                        {doc.isVirtualCrawl ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" />
+                            Crawling ({doc.pagesCrawled} pages)
+                          </span>
+                        ) : doc.status === 'ready' || doc.status === 'embedded' ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                            <CheckCircle2 className="h-3 w-3" /> Ready
+                          </span>
+                        ) : doc.status === 'failed' ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
+                            <AlertCircle className="h-3 w-3" /> Failed
+                          </span>
                         ) : (
-                          <FileText className="h-4 w-4 text-white" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" /> Processing
+                          </span>
                         )}
-                      </div>
-                      <div className="flex flex-col max-w-xs">
-                        <span className="font-medium text-white truncate max-w-[250px]" title={doc.title || doc.fileName || doc.originalFileName}>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {!doc.isVirtualCrawl && (
+                          <button
+                            onClick={() => requestDelete(doc)}
+                            title="Delete document"
+                            className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* --- Mobile card view --- */}
+            <div className="sm:hidden divide-y divide-white/5">
+              {allDisplayItems.map((doc) => (
+                <div key={doc._id} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+                      {doc.sourceType === 'webpage' ? (
+                        <Globe className={`h-4 w-4 ${doc.isVirtualCrawl ? 'text-blue-400 animate-pulse' : 'text-white'}`} />
+                      ) : (
+                        <FileText className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium text-white text-sm truncate" title={doc.title || doc.fileName || doc.originalFileName}>
                           {doc.title || doc.fileName || doc.originalFileName}
                         </span>
-                        {doc.sourceType === 'webpage' && doc.sourceUrl && (
-                          <span className="text-xs text-white/40 truncate max-w-[250px] flex items-center gap-1 mt-0.5">
-                            <LinkIcon className="h-3 w-3" /> {doc.sourceUrl}
+                        {!doc.isVirtualCrawl && (
+                          <button
+                            onClick={() => requestDelete(doc)}
+                            title="Delete document"
+                            className="shrink-0 rounded-lg p-1.5 -mr-1.5 -mt-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {doc.sourceType === 'webpage' && doc.sourceUrl && (
+                        <span className="text-xs text-white/40 truncate flex items-center gap-1 mt-0.5">
+                          <LinkIcon className="h-3 w-3 shrink-0" /> <span className="truncate">{doc.sourceUrl}</span>
+                        </span>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/40">
+                        <span className="truncate max-w-[140px]">{getWorkspaceName(doc.workspace || doc.workspaceId)}</span>
+                        <span>·</span>
+                        <span>{formatSize(doc.fileSizeByte)}</span>
+                      </div>
+
+                      <div className="mt-2.5">
+                        {doc.isVirtualCrawl ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-400 ring-1 ring-blue-500/20">
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" />
+                            Crawling ({doc.pagesCrawled} pages)
+                          </span>
+                        ) : doc.status === 'ready' || doc.status === 'embedded' ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                            <CheckCircle2 className="h-3 w-3" /> Ready
+                          </span>
+                        ) : doc.status === 'failed' ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-400 ring-1 ring-red-500/20">
+                            <AlertCircle className="h-3 w-3" /> Failed
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-400 ring-1 ring-blue-500/20">
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" /> Processing
                           </span>
                         )}
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">{getWorkspaceName(doc.workspace || doc.workspaceId)}</td>
-                  <td className="px-6 py-4">{formatSize(doc.fileSizeByte)}</td>
-                  <td className="px-6 py-4">
-                    {doc.isVirtualCrawl ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" />
-                        Crawling ({doc.pagesCrawled} pages)
-                      </span>
-                    ) : doc.status === 'ready' || doc.status === 'embedded' ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
-                        <CheckCircle2 className="h-3 w-3" /> Ready
-                      </span>
-                    ) : doc.status === 'failed' ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
-                        <AlertCircle className="h-3 w-3" /> Failed
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400/30 border-t-blue-400" /> Processing
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {!doc.isVirtualCrawl && (
-                      <button
-                        onClick={() => requestDelete(doc)}
-                        title="Delete document"
-                        className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -336,12 +408,12 @@ function DeleteConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/60 px-4 backdrop-blur-md transition-all">
-      <div className="relative w-full max-w-md animate-[rise_0.3s_ease-out_both] rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto animate-[rise_0.3s_ease-out_both] rounded-[24px] sm:rounded-[32px] bg-white/[0.03] p-6 sm:p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
 
         <button
           onClick={onCancel}
           disabled={isDeleting}
-          className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+          className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
@@ -350,9 +422,9 @@ function DeleteConfirmModal({
           <Trash2 className="h-5 w-5 text-red-400" />
         </div>
 
-        <h2 className="mb-2 text-xl font-medium tracking-tight text-white">Delete document?</h2>
+        <h2 className="mb-2 text-lg sm:text-xl font-medium tracking-tight text-white pr-8">Delete document?</h2>
         <p className="mb-8 text-sm leading-relaxed text-white/40">
-          <span className="text-white/70 font-medium">{name}</span> will be permanently removed from this workspace's knowledge base. A backup file will be downloaded before it's deleted, but this action can't be undone.
+          <span className="text-white/70 font-medium break-words">{name}</span> will be permanently removed from this workspace's knowledge base. A backup file will be downloaded before it's deleted, but this action can't be undone.
         </p>
 
         <div className="flex gap-3">
@@ -424,17 +496,17 @@ function CrawlModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/60 px-4 backdrop-blur-md transition-all">
-      <div className="relative w-full max-w-lg animate-[rise_0.3s_ease-out_both] rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto animate-[rise_0.3s_ease-out_both] rounded-[24px] sm:rounded-[32px] bg-white/[0.03] p-6 sm:p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
 
         <button
           onClick={onClose}
           disabled={isSubmitting}
-          className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+          className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="mb-2 text-2xl font-medium tracking-tight text-white">Crawl Website</h2>
+        <h2 className="mb-2 text-xl sm:text-2xl font-medium tracking-tight text-white pr-8">Crawl Website</h2>
         <p className="mb-8 text-sm text-white/40 leading-relaxed">
           Omnix will scan this domain and extract all readable content into your Knowledge Base.
           {/* NEW: UX Warning message */}
@@ -580,17 +652,17 @@ function UploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/60 px-4 backdrop-blur-md transition-all">
-      <div className="relative w-full max-w-lg animate-[rise_0.3s_ease-out_both] rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto animate-[rise_0.3s_ease-out_both] rounded-[24px] sm:rounded-[32px] bg-white/[0.03] p-6 sm:p-8 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
 
         <button
           onClick={onClose}
           disabled={isUploading}
-          className="absolute right-6 top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+          className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full p-2 text-white/40 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <h2 className="mb-2 text-2xl font-medium tracking-tight text-white">Upload Knowledge</h2>
+        <h2 className="mb-2 text-xl sm:text-2xl font-medium tracking-tight text-white pr-8">Upload Knowledge</h2>
         <p className="mb-8 text-sm text-white/40">Assign a document to a workspace for vector embedding.</p>
 
         {/* 1. Workspace Selector */}
@@ -625,7 +697,7 @@ function UploadModal({
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => !isUploading && inputRef.current?.click()}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 transition-all ${dragActive
+              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-6 sm:p-10 transition-all ${dragActive
                 ? "border-white/40 bg-white/10"
                 : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
                 } ${isUploading ? "pointer-events-none opacity-50" : ""}`}
@@ -640,8 +712,8 @@ function UploadModal({
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 transition-transform group-hover:scale-110">
                 <UploadCloud className="h-5 w-5 text-white/60 group-hover:text-white" />
               </div>
-              <p className="text-sm font-medium text-white">Click to upload or drag and drop</p>
-              <p className="mt-1 text-xs text-white/40">PDF, TXT, DOCX, or CSV (Subject to plan size limits)</p>
+              <p className="text-sm font-medium text-white text-center">Click to upload or drag and drop</p>
+              <p className="mt-1 text-xs text-white/40 text-center">PDF, TXT, DOCX, or CSV (Subject to plan size limits)</p>
             </div>
           ) : (
             <div className="flex items-center justify-between rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
@@ -657,7 +729,7 @@ function UploadModal({
               <button
                 onClick={() => setFile(null)}
                 disabled={isUploading}
-                className="rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
+                className="shrink-0 rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
               </button>

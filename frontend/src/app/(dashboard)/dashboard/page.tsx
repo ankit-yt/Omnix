@@ -55,23 +55,23 @@ export default function DashboardLandingPage() {
 
   const handleCopySnippet = () => {
     const snippetId = selectedWorkspaceId || "YOUR_WORKSPACE_ID";
-    const snippet = `<script\n  src="https://cdn.omnix.ai/widget.js"\n  data-workspace-id="${snippetId}"\n  defer>\n</script>`;
+    const snippet = `<script\n  src="https://omnix-r4za.onrender.com/widget.js"\n  data-workspace-id="${snippetId}"\n  defer>\n</script>`;
     navigator.clipboard.writeText(snippet);
     toast.success("Embed snippet copied to clipboard!");
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-8 lg:p-12">
+    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-8 lg:p-12">
       
-      <header className="mb-10">
-        <div className="flex items-center justify-between">
+      <header className="mb-8 sm:mb-10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-medium tracking-tight text-white">Dashboard Overview</h1>
-            <p className="mt-2 text-sm text-white/40">
+            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">Dashboard Overview</h1>
+            <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-white/40">
               Welcome back, {user.name}. {isOnboardingComplete ? "Your workspace is ready." : "Track your usage and complete your setup."}
             </p>
           </div>
-          <div className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white ring-1 ring-white/20 shadow-lg">
+          <div className="self-start sm:self-auto rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white ring-1 ring-white/20 shadow-lg">
             {cachedPlan} Plan
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function DashboardLandingPage() {
 
       {/* --- DYNAMIC SECTION: Onboarding OR Deployment --- */}
       {!isOnboardingComplete ? (
-        <section className="mb-12">
+        <section className="mb-10 sm:mb-12">
           <h2 className="mb-4 text-sm font-medium tracking-wide text-white/60 uppercase">Onboarding Status</h2>
           <div className="flex flex-col gap-4 md:flex-row">
             <OnboardingStep 
@@ -99,20 +99,20 @@ export default function DashboardLandingPage() {
           </div>
         </section>
       ) : (
-        <section className="mb-12">
+        <section className="mb-10 sm:mb-12">
           <h2 className="mb-4 text-sm font-medium tracking-wide text-white/60 uppercase">Integration & Quick Actions</h2>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             
             {/* Widget Deployment Card */}
-            <div className="flex flex-col justify-between rounded-3xl bg-white/[0.02] p-6 ring-1 ring-white/[0.05] backdrop-blur-xl">
+            <div className="flex flex-col justify-between rounded-2xl sm:rounded-3xl bg-white/[0.02] p-4 sm:p-6 ring-1 ring-white/[0.05] backdrop-blur-xl">
               <div>
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
                     <Terminal className="h-5 w-5 text-blue-400" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="font-medium text-white">Deploy Widget</h3>
-                    <p className="text-xs text-white/40">Paste this into your website's &lt;head&gt; tag</p>
+                    <p className="text-xs text-white/40 truncate">Paste this into your website's &lt;head&gt; tag</p>
                   </div>
                 </div>
 
@@ -139,11 +139,11 @@ export default function DashboardLandingPage() {
                   </div>
                 )}
                 
-                <div className="relative rounded-2xl bg-[#0a0d16] p-4 ring-1 ring-white/10">
-                  <pre className="overflow-x-auto text-[13px] text-white/70">
+                <div className="relative rounded-2xl bg-[#0a0d16] p-3 sm:p-4 ring-1 ring-white/10">
+                  <pre className="overflow-x-auto text-[12px] sm:text-[13px] text-white/70 pr-10">
                     <code>
                       <span className="text-pink-400">&lt;script</span>{'\n'}
-                      <span className="text-blue-300">  src=</span><span className="text-green-300">"https://cdn.omnix.ai/widget.js"</span>{'\n'}
+                      <span className="text-blue-300">  src=</span><span className="text-green-300">"https://omnix-r4za.onrender.com/widget.js"</span>{'\n'}
                       <span className="text-blue-300">  data-workspace-id=</span><span className="text-green-300">"{selectedWorkspaceId || 'YOUR_WORKSPACE_ID'}"</span>{'\n'}
                       <span className="text-blue-300">  defer</span><span className="text-pink-400">&gt;</span>{'\n'}
                       <span className="text-pink-400">&lt;/script&gt;</span>
@@ -151,7 +151,7 @@ export default function DashboardLandingPage() {
                   </pre>
                   <button 
                     onClick={handleCopySnippet}
-                    className="absolute right-3 top-3 rounded-lg bg-white/10 p-2 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
+                    className="absolute right-2 top-2 sm:right-3 sm:top-3 rounded-lg bg-white/10 p-2 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
@@ -195,7 +195,7 @@ export default function DashboardLandingPage() {
       {/* Dynamic Analytics & Limits Section */}
       <section>
         <h2 className="mb-4 text-sm font-medium tracking-wide text-white/60 uppercase">Usage & Limits</h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3">
           <MetricCard 
             icon={<LayoutGrid className="h-5 w-5" />}
             title="Active Workspaces" 
@@ -217,6 +217,7 @@ export default function DashboardLandingPage() {
             used={cachedUsage.messagesThisMonth} 
             total={cachedLimits.messagesPerMonth} 
             label="Messages Sent"
+            className="sm:col-span-2 md:col-span-1"
           />
         </div>
       </section>
@@ -227,7 +228,7 @@ export default function DashboardLandingPage() {
 
 function QuickActionCard({ href, icon, title, description, bg, ring, className = "" }: any) {
   return (
-    <Link href={href} className={`group flex flex-col justify-center rounded-3xl bg-white/[0.02] p-5 ring-1 ring-white/[0.05] backdrop-blur-xl transition-all hover:bg-white/5 hover:ring-white/10 ${className}`}>
+    <Link href={href} className={`group flex flex-col justify-center rounded-2xl sm:rounded-3xl bg-white/[0.02] p-4 sm:p-5 ring-1 ring-white/[0.05] backdrop-blur-xl transition-all hover:bg-white/5 hover:ring-white/10 ${className}`}>
       <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${bg} ring-1 ${ring} transition-transform group-hover:scale-110`}>
         {icon}
       </div>
@@ -239,7 +240,7 @@ function QuickActionCard({ href, icon, title, description, bg, ring, className =
 
 function OnboardingStep({ title, description, isCompleted, isActive, actionUrl }: { title: string, description: string, isCompleted: boolean, isActive: boolean, actionUrl: string }) {
   return (
-    <div className={`flex flex-1 items-start gap-4 rounded-3xl p-6 ring-1 backdrop-blur-xl transition-all ${isActive ? 'bg-white/10 ring-white/20 shadow-lg scale-[1.02]' : 'bg-white/2 ring-white/[0.05]'}`}>
+    <div className={`flex flex-1 items-start gap-4 rounded-2xl sm:rounded-3xl p-5 sm:p-6 ring-1 backdrop-blur-xl transition-all ${isActive ? 'bg-white/10 ring-white/20 shadow-lg sm:scale-[1.02]' : 'bg-white/2 ring-white/[0.05]'}`}>
       <div className="mt-0.5 shrink-0 transition-colors">
         {isCompleted ? <CheckCircle2 className="h-5 w-5 text-green-400" /> : <Circle className={`h-5 w-5 ${isActive ? 'text-white' : 'text-white/20'}`} />}
       </div>
@@ -256,19 +257,19 @@ function OnboardingStep({ title, description, isCompleted, isActive, actionUrl }
   );
 }
 
-function MetricCard({ title, used, total, label, icon, suffix = "" }: { title: string, used: number, total: number, label: string, icon: React.ReactNode, suffix?: string }) {
+function MetricCard({ title, used, total, label, icon, suffix = "", className = "" }: { title: string, used: number, total: number, label: string, icon: React.ReactNode, suffix?: string, className?: string }) {
   const percentage = total > 0 ? Math.min(Math.round((used / total) * 100), 100) : 0;
   
   return (
-    <div className="flex flex-col justify-between rounded-3xl bg-white/2 p-6 ring-1 ring-white/5 backdrop-blur-xl">
-      <div className="mb-6 flex items-center justify-between text-white/40">
+    <div className={`flex flex-col justify-between rounded-2xl sm:rounded-3xl bg-white/2 p-5 sm:p-6 ring-1 ring-white/5 backdrop-blur-xl ${className}`}>
+      <div className="mb-5 sm:mb-6 flex items-center justify-between text-white/40">
         <span className="text-sm font-medium text-white">{title}</span>
         {icon}
       </div>
       
       <div>
-        <div className="mb-2 flex items-baseline gap-2">
-          <span className="text-3xl font-medium tracking-tight text-white">{used.toLocaleString()}{suffix}</span>
+        <div className="mb-2 flex items-baseline gap-2 flex-wrap">
+          <span className="text-2xl sm:text-3xl font-medium tracking-tight text-white">{used.toLocaleString()}{suffix}</span>
           <span className="text-sm text-white/40">/ {total === -1 ? '∞' : `${total.toLocaleString()}${suffix}`}</span>
         </div>
         <p className="mb-4 text-xs text-white/40">{label}</p>

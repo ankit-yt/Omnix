@@ -193,11 +193,8 @@ export default function ChatPage() {
   }, [isTyping]);
 
   // Auto-scroll to bottom once the initial message page has finished loading.
-  // This is what was missing before — nothing previously fired a scroll-to-bottom
-  // when a session's messages first loaded, so the feed stayed pinned at the top.
   useEffect(() => {
     if (initialLoading) return;
-    // run after layout so content (markdown, citations) has settled before we scroll
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     });
@@ -280,11 +277,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden p-6 lg:p-4">
+    <div className="flex h-full flex-col overflow-hidden p-2 sm:p-4 lg:p-4 relative">
 
       {/* --- Chat Feed Area --- */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto rounded-3xl p-4 sm:p-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 pb-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto rounded-2xl sm:rounded-3xl p-2 sm:p-6">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4 sm:gap-6 pb-4">
 
           {/* top sentinel — triggers loading older messages */}
           <div ref={topSentinelRef} className="h-1 w-full shrink-0" />
@@ -302,20 +299,20 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+            <div key={msg.id} className={`flex gap-2 sm:gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
 
-              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ${msg.role === "user" ? "bg-white/10 ring-white/20" : "bg-linear-to-br from-blue-500/20 to-purple-500/20 ring-white/10"}`}>
-                {msg.role === "user" ? <UserIcon className="h-4 w-4 text-white" /> : <Bot className="h-4 w-4 text-white" />}
+              <div className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full ring-1 ${msg.role === "user" ? "bg-white/10 ring-white/20" : "bg-linear-to-br from-blue-500/20 to-purple-500/20 ring-white/10"}`}>
+                {msg.role === "user" ? <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" /> : <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
               </div>
 
-              <div className={`max-w-[80%] rounded-2xl p-4 text-[14px] leading-relaxed ${msg.role === "user"
+              <div className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 text-[13px] sm:text-[14px] leading-relaxed ${msg.role === "user"
                 ? "bg-white/10 text-white shadow-sm ring-1 ring-white/20"
                 : "bg-white/3 text-white/90 ring-1 ring-white/10 backdrop-blur-md"
                 }`}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                    p: ({ children }) => <p className="mb-3 last:mb-0 break-words">{children}</p>,
                     ul: ({ children }) => <ul className="mb-3 ml-4 list-disc space-y-1.5">{children}</ul>,
                     ol: ({ children }) => <ol className="mb-3 ml-4 list-decimal space-y-1.5">{children}</ol>,
                     li: ({ children }) => <li className="pl-1">{children}</li>,
@@ -324,12 +321,12 @@ export default function ChatPage() {
                     h3: ({ children }) => <h3 className="mb-1.5 mt-2 text-sm font-semibold text-white">{children}</h3>,
                     strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
                     a: ({ children, href }) => (
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline text-blue-300 hover:text-blue-200">
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline text-blue-300 hover:text-blue-200 break-all">
                         {children}
                       </a>
                     ),
                     code: ({ children }) => (
-                      <code className="rounded bg-white/10 px-1.5 py-0.5 text-[13px] font-mono">{children}</code>
+                      <code className="rounded bg-white/10 px-1.5 py-0.5 text-[12px] sm:text-[13px] font-mono break-words">{children}</code>
                     ),
                     blockquote: ({ children }) => (
                       <blockquote className="border-l-2 border-white/20 pl-3 italic text-white/70">{children}</blockquote>
@@ -350,7 +347,7 @@ export default function ChatPage() {
                         {msg.citations.map((citation) => (
                           <div
                             key={citation.id}
-                            className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs ring-1 ring-white/10"
+                            className="flex items-center gap-2 rounded-full bg-white/5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs ring-1 ring-white/10 max-w-full"
                           >
                             <span>
                               {citation.type === "file" ? "📄" : "🌐"}
@@ -361,12 +358,12 @@ export default function ChatPage() {
                                 href={citation.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-300 hover:text-blue-200"
+                                className="text-blue-300 hover:text-blue-200 truncate max-w-[140px] sm:max-w-none"
                               >
                                 {citation.title}
                               </a>
                             ) : (
-                              <span className="text-white/70">
+                              <span className="text-white/70 truncate max-w-[140px] sm:max-w-none">
                                 {citation.title}
                               </span>
                             )}
@@ -382,11 +379,11 @@ export default function ChatPage() {
 
           {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex gap-4 flex-row">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 ring-1 ring-white/10">
-                <Bot className="h-4 w-4 text-white" />
+            <div className="flex gap-2 sm:gap-4 flex-row">
+              <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 ring-1 ring-white/10">
+                <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
               </div>
-              <div className="flex max-w-[80%] items-center rounded-2xl bg-white/[0.03] px-5 py-4 ring-1 ring-white/10 backdrop-blur-md">
+              <div className="flex max-w-[88%] sm:max-w-[80%] items-center rounded-2xl bg-white/[0.03] px-4 sm:px-5 py-3 sm:py-4 ring-1 ring-white/10 backdrop-blur-md">
                 <div className="flex gap-1.5">
                   <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/40 [animation-delay:-0.3s]"></div>
                   <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/40 [animation-delay:-0.15s]"></div>
@@ -401,17 +398,17 @@ export default function ChatPage() {
       </div>
 
       {/* --- Chat Input Footer --- */}
-      <div className="mt-4 relative mx-auto  w-full max-w-3xl">
+      <div className="mt-3 sm:mt-4 relative mx-auto w-full max-w-3xl px-1 sm:px-0">
         <form
           onSubmit={handleSendMessage}
-          className="relative flex items-center rounded-full bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-2xl transition-all focus-within:bg-white/10 focus-within:ring-white/30 shadow-lg"
+          className="relative flex items-center rounded-full bg-white/5 p-1.5 sm:p-2 ring-1 ring-white/10 backdrop-blur-2xl transition-all focus-within:bg-white/10 focus-within:ring-white/30 shadow-lg"
         >
           <div className="relative">
             <button
               type="button"
               onClick={() => (workspaceRendered ? closeWorkspace() : openWorkspace())}
               disabled={workspaces.length === 0}
-              className="flex h-10 w-10 items-center gap-2 rounded-2xl px-3 text-sm text-white transition-all"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center gap-2 rounded-2xl px-2 sm:px-3 text-sm text-white transition-all shrink-0"
             >
               <ChevronDown
                 className={`h-4 w-4 transition-transform duration-300 ${workspaceOpen ? "rotate-180" : ""}`}
@@ -421,7 +418,7 @@ export default function ChatPage() {
             {workspaceRendered && (
               <div
                 ref={workspaceRef}
-                className="absolute bottom-12 left-0 z-50 w-72 origin-bottom-left overflow-hidden rounded-3xl bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl"
+                className="fixed sm:absolute bottom-20 sm:bottom-12 left-2 right-2 sm:left-0 sm:right-auto z-50 w-auto sm:w-72 origin-bottom-left overflow-hidden rounded-3xl bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl"
                 style={{
                   opacity: workspaceOpen ? 1 : 0,
                   transform: workspaceOpen
@@ -470,22 +467,22 @@ export default function ChatPage() {
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={workspaces.length > 0 ? "Ask a question about your documents..." : "Loading workspaces..."}
-            className="w-full bg-transparent px-4 p text-[14px] text-white placeholder-white/30 outline-none"
+            placeholder={workspaces.length > 0 ? "Ask a question..." : "Loading workspaces..."}
+            className="w-full min-w-0 bg-transparent px-2 sm:px-4 text-[13px] sm:text-[14px] text-white placeholder-white/30 outline-none"
             disabled={isTyping || workspaces.length === 0}
           />
           <button
             type="submit"
             disabled={!prompt.trim() || isTyping || workspaces.length === 0}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
           >
             <ArrowRight className="h-4 w-4" />
           </button>
 
         </form>
 
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-white/30">
-          <AlertTriangle className="h-3 w-3" />
+        <div className="mt-2 sm:mt-3 flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] text-white/30 px-2 text-center">
+          <AlertTriangle className="h-3 w-3 shrink-0" />
           <p>Omnix AI can make mistakes. Verify critical ERP outputs.</p>
         </div>
       </div>
@@ -493,7 +490,7 @@ export default function ChatPage() {
       <button
         type="button"
         onClick={handleLaunchERP}
-        className="group flex h-10 absolute right-5 shrink-0 items-center gap-2 rounded-full  px-4 text-sm font-medium text-white  transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+        className="group flex h-9 w-9 sm:h-10 sm:w-auto absolute top-2 right-2 sm:top-4 sm:right-5 shrink-0 items-center justify-center gap-2 rounded-full bg-white/5 sm:bg-transparent ring-1 ring-white/10 sm:ring-0 px-0 sm:px-4 text-sm font-medium text-white transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
       >
         <ExternalLink className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
       </button>

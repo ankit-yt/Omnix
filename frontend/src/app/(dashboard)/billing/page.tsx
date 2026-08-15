@@ -115,15 +115,15 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-8 lg:p-12 relative">
-      <header className="mb-12 text-center">
-        <h1 className="text-3xl font-medium tracking-tight text-white">Upgrade your workspace</h1>
-        <p className="mt-2 text-sm text-white/40">Supercharge your ERP interactions with higher limits and advanced features.</p>
+    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-8 lg:p-12 relative">
+      <header className="mb-8 sm:mb-12 text-center">
+        <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-white">Upgrade your workspace</h1>
+        <p className="mt-2 text-xs sm:text-sm text-white/40 px-2">Supercharge your ERP interactions with higher limits and advanced features.</p>
 
         {isCancelled && currentPlanCode !== 'free' && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-1.5 text-xs font-medium text-red-400 ring-1 ring-red-500/20">
-            <AlertTriangle className="h-3 w-3" />
-            Your subscription has been cancelled and will drop to the free tier.
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-1.5 text-xs font-medium text-red-400 ring-1 ring-red-500/20 max-w-full">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            <span className="text-left sm:text-center">Your subscription has been cancelled and will drop to the free tier.</span>
           </div>
         )}
       </header>
@@ -139,8 +139,8 @@ export default function BillingPage() {
           return (
             <div
               key={plan._id}
-              className={`relative flex flex-col rounded-3xl p-8 backdrop-blur-xl ring-1 transition-all ${isCurrentPlan
-                  ? 'bg-white/10 ring-white/20 shadow-lg scale-[1.02]'
+              className={`relative flex flex-col rounded-2xl sm:rounded-3xl p-6 sm:p-8 backdrop-blur-xl ring-1 transition-all ${isCurrentPlan
+                  ? 'bg-white/10 ring-white/20 shadow-lg md:scale-[1.02]'
                   : 'bg-white/2 ring-white/[0.05] hover:bg-white/5 hover:ring-white/10'
                 }`}
             >
@@ -150,7 +150,7 @@ export default function BillingPage() {
                 </span>
               )}
 
-              <h3 className="text-xl font-medium tracking-tight text-white">{plan.displayName}</h3>
+              <h3 className="text-lg sm:text-xl font-medium tracking-tight text-white">{plan.displayName}</h3>
               <p className="mt-2 min-h-[40px] text-sm text-white/40">{plan.description}</p>
 
               <div className="mt-6 mb-2">
@@ -160,7 +160,7 @@ export default function BillingPage() {
                   </div>
                 )}
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-medium tracking-tight text-white">
+                  <span className="text-3xl sm:text-4xl font-medium tracking-tight text-white">
                     ₹{displayPrice.toLocaleString()}
                   </span>
                   <span className="text-sm text-white/40">/mo</span>
@@ -193,7 +193,7 @@ export default function BillingPage() {
                 </button>
               )}
 
-              <div className="my-8 h-px w-full bg-white/5" />
+              <div className="my-6 sm:my-8 h-px w-full bg-white/5" />
 
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-sm text-white/60">
@@ -229,12 +229,12 @@ export default function BillingPage() {
       {/* Cancellation Confirmation Modal */}
       {isCancelModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070912]/80 px-4 backdrop-blur-md">
-          <div className="relative w-full max-w-md animate-[rise_0.3s_ease-out_both] overflow-hidden rounded-[32px] bg-white/[0.03] p-8 ring-1 ring-white/10 shadow-2xl">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto animate-[rise_0.3s_ease-out_both] rounded-[24px] sm:rounded-[32px] bg-white/[0.03] p-6 sm:p-8 ring-1 ring-white/10 shadow-2xl">
 
             <button
               onClick={() => setIsCancelModalOpen(false)}
               disabled={isCancelling}
-              className="absolute right-6 top-6 rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-50"
+              className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full p-2 text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -243,7 +243,7 @@ export default function BillingPage() {
               <AlertTriangle className="h-6 w-6" />
             </div>
 
-            <h2 className="mb-2 text-xl font-medium tracking-tight text-white">Cancel Subscription?</h2>
+            <h2 className="mb-2 text-lg sm:text-xl font-medium tracking-tight text-white pr-8">Cancel Subscription?</h2>
             <p className="mb-8 text-sm leading-relaxed text-white/60">
               Are you sure you want to cancel your <strong className="text-white">{currentPlanCode}</strong> plan? Your workspace limits will be immediately downgraded to the free tier.
             </p>
