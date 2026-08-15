@@ -20,7 +20,7 @@ export default function layout({ children }: { children: React.ReactNode }) {
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <head>
         <Script
-  src="http://localhost:5001/widget.js"
+  src="https://omnix-r4za.onrender.com/widget.js"
   data-workspace-id="6a74a84ecdc5133dad8c5f5d"
 />
       </head>
