@@ -63,5 +63,15 @@ export const adminService = {
   setPlanActiveStatus: async (code: string, isActive: boolean): Promise<Plan> => {
     const response = await api.patch(`/admin/plans/${code}/status`, { isActive });
     return response.data.data.plan;
+  },
+
+  getSystemSetting: async (key: string): Promise<any> => {
+    const response = await api.get(`/admin/settings/${key}`);
+    return response.data.data.setting;
+  },
+
+  updateSystemSetting: async (key: string, value: any): Promise<any> => {
+    const response = await api.put(`/admin/settings/${key}`, { value });
+    return response.data.data.setting;
   }
 };

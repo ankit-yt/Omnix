@@ -1,4 +1,4 @@
-import { createPlan, createPromotion, getAllPlansAdmin, linkRazorpayPlan, setPlanActiveStatus, updatePlan } from '@/controllers/admin.controller.js';
+import { createPlan, createPromotion, getAllPlansAdmin, getSystemSetting, linkRazorpayPlan, setPlanActiveStatus, updatePlan, updateSystemSetting } from '@/controllers/admin.controller.js';
 import { authenticate, restrictTo } from '@/middleware/authenticate.js';
 import { validate } from '@/middleware/validate.js';
 import { setPlanActiveStatusSchema, updatePlanSchema } from '@/validators/admin.validator.js';
@@ -16,5 +16,7 @@ router.get('/plans', getAllPlansAdmin);
 
 router.patch('/plans/:code' , validate(updatePlanSchema) , updatePlan);
 router.patch('/plans/:code/status', validate(setPlanActiveStatusSchema), setPlanActiveStatus);
+router.get('/settings/:key', getSystemSetting);
+router.put('/settings/:key', updateSystemSetting);
 
 export default router;

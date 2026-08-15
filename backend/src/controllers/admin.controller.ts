@@ -100,3 +100,32 @@ export const setPlanActiveStatus = asyncHandler(async (req: Request, res: Respon
     data: { plan }
   });
 });
+
+export const updateSystemSetting = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = req.user?._id?.toString();
+  if (!adminId) throw new AppError('Unauthorized: Admin context missing.', 401);
+
+  const { key } = req.params;
+  const { value } = req.body;
+
+  if (value === undefined) {
+    throw new AppError('A value is required to update a system setting.', 400);
+  }
+
+  const setting = await adminService.updateSystemSetting(adminId, key as string, value);
+
+  res.status(200).json({
+    status: 'success',
+    message: `System setting '${key}' updated successfully.`,
+    data: { setting }
+  });
+});
+
+export const getSystemSetting = asyncHandler(async (req: Request, res: Response) => {
+  const setting = await adminService.getSystemSetting(req.params.key as string);
+  
+  res.status(200).json({ 
+    status: 'success', 
+    data: { setting } 
+  });
+});

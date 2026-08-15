@@ -1,22 +1,34 @@
+import systemSettingRepository from '@/repositories/systemSetting.repository.js';
 import AppError from '@/utils/AppError.js';
 import { Content, GoogleGenerativeAI, TaskType } from '@google/generative-ai';
 
 class AIService {
-  private genAI: GoogleGenerativeAI;
+  
+  private genAI: GoogleGenerativeAI | null = null;
+  private currentApiKey: string | null = null;
 
-  constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
+  private async initializeAI() {
+    const setting = await systemSettingRepository.findByKey('GEMINI_API_KEY');
+    const rawKey = setting?.value || process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-      throw new Error('CRITICAL SYSTEM HALT: GEMINI_API_KEY is not defined in environment variables.');
+    if (!rawKey) {
+      throw new AppError('CRITICAL SYSTEM HALT: GEMINI_API_KEY is not defined in DB or environment variables.', 500);
     }
 
-    this.genAI = new GoogleGenerativeAI(apiKey);
-  }
+    // Aggressively clean the key: convert to string, remove accidental quotes, and trim spaces/newlines
+    const apiKey = String(rawKey).replace(/['"]/g, '').trim();
 
-  async generateEmbedding(text: string, taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'): Promise<number[]> {
+    if (this.currentApiKey !== apiKey) {
+      this.currentApiKey = apiKey;
+      this.genAI = new GoogleGenerativeAI(apiKey);
+    }
+  }
+  
+  async generateEmbedding(text: string, taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'): Promise<number[]> {  
+    await this.initializeAI();
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-embedding-2' });
+      // Changed to the correct Google embedding model
+      const model = this.genAI!.getGenerativeModel({ model: 'gemini-embedding-001' });
 
       const mappedTaskType = taskType === 'RETRIEVAL_DOCUMENT'
         ? TaskType.RETRIEVAL_DOCUMENT
@@ -26,6 +38,7 @@ class AIService {
         role: 'user',
         parts: [{ text }]
       };
+      
       const result = await model.embedContent({
         content: formattedContent,
         taskType: mappedTaskType
@@ -39,9 +52,10 @@ class AIService {
   }
 
   async generateText(prompt: string): Promise<{ text: string; tokenCount: number }> {
+    await this.initializeAI();
     try {
-      const model = this.genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+      const model = this.genAI!.getGenerativeModel({
+        model: 'gemini-flash-latest', // Updated to standard 1.5 flash naming convention just in case
         generationConfig: {
           temperature: 0.1
         }
@@ -65,6 +79,5 @@ class AIService {
     }
   }
 }
-
 
 export default new AIService();

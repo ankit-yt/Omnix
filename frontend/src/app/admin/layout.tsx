@@ -22,11 +22,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const logout = useLogout();
-   useInitializeAuth();
+  useInitializeAuth();
 
-  const user = useAuthStore((state)=>state.user);
+  const user = useAuthStore((state) => state.user);
 
-  
+
 
   if (!user || user.role !== 'super_admin') {
     return null;
@@ -80,18 +80,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <h3 className="mb-3 px-4 text-[11px] font-medium tracking-wider text-white/30 uppercase">Preferences</h3>
             <nav className="space-y-1.5">
               <NavItem
-                href="/billing"
+                href="/admin/billing"
                 icon={<CreditCard className="h-4.5 w-4.5" />}
                 label="Billing & Limits"
-                active={pathname?.includes("/billing")}
+                active={pathname?.includes("/admin/billing")}
               />
-              
-              {/* <NavItem
-                href="/settings"
+
+              <NavItem
+                href="/admin/settings"
                 icon={<Settings className="h-4.5 w-4.5" />}
                 label="Settings"
-                active={pathname?.includes("/settings")}
-              /> */}
+                active={pathname?.includes("/admin/settings")}
+              />
             </nav>
           </div>
         </div>

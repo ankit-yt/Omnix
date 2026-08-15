@@ -5,6 +5,7 @@ import promotionRepository from '@/repositories/promotion.repository.js';
 import AppError from '@/utils/AppError.js';
 import { logger } from '@/utils/logger.js';
 import { updatePlanDto } from '@/validators/admin.validator.js';
+import systemSettingRepository from '@/repositories/systemSetting.repository.js';
 import mongoose from 'mongoose';
 class AdminService {
 
@@ -105,6 +106,19 @@ class AdminService {
   async getAllPlansForAdmin() {
     return planRepository.findAllForAdmin();
   }
+
+  async updateSystemSetting(adminUserId: string, key: string, value: any) {
+  const setting = await systemSettingRepository.upsert(key, value, adminUserId);
+  return setting;
+}
+
+async getSystemSetting(key: string) {
+  const setting = await systemSettingRepository.findByKey(key);
+  if (!setting) {
+    throw new AppError(`System setting with key '${key}' not found.`, 404);
+  }
+  return setting;
+}
 
 }
 
