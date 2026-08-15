@@ -405,7 +405,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
                 </button>
               </div>
 
-         <div className="pointer-events-auto flex h-10 items-center gap-2.5 rounded-full bg-white px-4 shadow-sm">
+         <div className="pointer-events-auto flex h-10 items-center gap-2.5 rounded-full bg-white px-4  border-0 ring-0">
 
                 <span className="text-[14px] font-semibold tracking-tight text-gray-800">
                   {config.botName}
@@ -589,7 +589,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
               </div>
 
         <div className="shrink-0 bg-white px-4 pb-4 pt-2">
-             <form onSubmit={handleSendMessage} className="flex items-center gap-2 rounded-full bg-[#f3f4f6] p-1.5 transition-all focus-within:ring-2 focus-within:ring-gray-300">
+           <form onSubmit={handleSendMessage} className="flex items-center gap-2 rounded-full bg-[#f3f4f6] p-1.5 transition-all  border-0 ring-0 outline-none shadow-none">
                   <input
                     ref={inputRef}
                     type="text"
