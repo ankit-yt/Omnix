@@ -7,7 +7,6 @@ import { ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState, Suspense } from "react";
-import { toast } from "sonner";
 
 function LoginContent() {
   const router = useRouter();
@@ -30,16 +29,19 @@ function LoginContent() {
 
     try {
       const data = await authService.login({ email, password });
+
       setAuth(data.data.user, data.accessToken);
+
       const callbackUrl = searchParams.get("callbackUrl");
       console.log("redirecting");
-      router.replace(callbackUrl ?? "/dashboard");
+
+      window.location.replace(callbackUrl ?? "/dashboard");
+
     } catch (error: any) {
       console.error("Login failed", error.response);
       setErrorMessage(
         error.response?.data?.message || "Invalid email or password."
       );
-    } finally {
       setIsLoading(false);
     }
   };
