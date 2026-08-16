@@ -264,7 +264,7 @@ export default function ChatPage() {
     const workspace = workspaces.find(w => w._id === activeWorkspaceId);
     if (!workspace) return;
 
-    const rawUrl = workspace.erpUrl || "https://example-erp.com";
+    const rawUrl = workspace.website || "https://example-erp.com";
 
     try {
       const targetUrl = new URL(rawUrl);
