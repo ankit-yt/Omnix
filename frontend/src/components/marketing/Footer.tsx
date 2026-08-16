@@ -10,12 +10,9 @@ export function Footer() {
         </span>
 
         <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/50">
-          <Link href={PRODUCT_ROUTE} className="hover:text-white">Product</Link>
-          <Link href={HOW_IT_WORKS_ROUTE} className="hover:text-white">How it works</Link>
+         
           <Link href={LOGIN_ROUTE} className="hover:text-white">Log in</Link>
           <Link href={SIGNUP_ROUTE} className="hover:text-white">Sign up</Link>
-          <Link href="#" className="hover:text-white">Privacy</Link>
-          <Link href="#" className="hover:text-white">Terms</Link>
         </nav>
 
         <span className="text-xs text-white/30">

@@ -75,7 +75,9 @@ function LoginContent() {
               transitionDelay: "80ms",
             }}
           >
-            <svg
+           <Link href={"/"}
+           
+           > <svg
               viewBox="0 0 24 24"
               className="h-6 w-6 text-white"
               fill="none"
@@ -86,7 +88,7 @@ function LoginContent() {
                 strokeWidth="1.5"
                 strokeLinejoin="round"
               />
-            </svg>
+            </svg></Link>
           </div>
           <h1
             className="text-2xl font-semibold tracking-tight text-white"

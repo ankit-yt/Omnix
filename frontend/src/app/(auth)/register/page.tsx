@@ -89,9 +89,20 @@ export default function RegisterPage() {
               transitionDelay: "80ms",
             }}
           >
-            <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="none">
-              <path d="M12 2 L22 8 L22 16 L12 22 L2 16 L2 8 Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-            </svg>
+           <Link href={"/"}
+           
+           > <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6 text-white"
+              fill="none"
+            >
+              <path
+                d="M12 2 L22 8 L22 16 L12 22 L2 16 L2 8 Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+            </svg></Link>
           </div>
           <h1
             className="text-2xl font-semibold tracking-tight text-white"

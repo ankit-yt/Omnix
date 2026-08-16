@@ -35,21 +35,7 @@ export function Navbar() {
           Omnix
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
-          <Link
-            href={PRODUCT_ROUTE}
-            className="text-sm text-white/70 transition-colors hover:text-white"
-          >
-            Product
-          </Link>
-          <Link
-            href={HOW_IT_WORKS_ROUTE}
-            className="text-sm text-white/70 transition-colors hover:text-white"
-          >
-            How it works
-          </Link>
-        </div>
-
+       
         <div className="flex items-center gap-5">
           <Link
             href={LOGIN_ROUTE}
