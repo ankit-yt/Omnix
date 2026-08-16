@@ -11,8 +11,8 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ['latin'] })
 
 export const metaData: Metadata = {
-  title: "ERP Genius",
-  description: "Ai assistant for ERP systems"
+  title: "Ominx",
+  description: "AI-powered chatbots that turn your website's knowledge into instant, accurate answers."
 }
 
 export default function layout({ children }: { children: React.ReactNode }) {
