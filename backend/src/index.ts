@@ -37,7 +37,7 @@ app.use(
     })
 );
 app.use(cors({
-  origin:[ process.env.NEXTAUTH_URL || 'http://localhost:3000' ,"https://barber-queue-eta.vercel.app" , "http://localhost:5173" ,"https://omnix-sandy.vercel.app"],
+  origin:[ process.env.NEXTAUTH_URL || 'http://localhost:3000' ,"https://barber-queue-eta.vercel.app" , "http://localhost:5173" ,"https://omnix-sandy.vercel.app", "https://pcte-alumni-talk-five.vercel.app"],
   credentials: true
 }))
 app.use(cookieParser());
