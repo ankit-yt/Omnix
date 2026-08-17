@@ -33,8 +33,8 @@ export default function RegisterPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const setAuth = useAuthStore((state)=>state.setAuth);
- const [errorMessage, setErrorMessage] = useState("");
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
@@ -53,12 +53,12 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       const data = await authService.register(formData);
-      setAuth(data.user , data.accessToken);
-      router.push('/dashboard');
-    } catch (error : any) {
+      setAuth(data.user, data.accessToken);
+      window.location.replace("/dashboard");
+    } catch (error: any) {
       console.log("Registration failed", (error as AxiosError).response?.data);
       setErrorMessage(
-      error.response?.data?.message || "Something went wrong.")
+        error.response?.data?.message || "Something went wrong.")
     } finally {
       setIsLoading(false);
     }
@@ -89,20 +89,20 @@ export default function RegisterPage() {
               transitionDelay: "80ms",
             }}
           >
-           <Link href={"/"}
-           
-           > <svg
+            <Link href={"/"}
+
+            > <svg
               viewBox="0 0 24 24"
               className="h-6 w-6 text-white"
               fill="none"
             >
-              <path
-                d="M12 2 L22 8 L22 16 L12 22 L2 16 L2 8 Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-            </svg></Link>
+                <path
+                  d="M12 2 L22 8 L22 16 L12 22 L2 16 L2 8 Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg></Link>
           </div>
           <h1
             className="text-2xl font-semibold tracking-tight text-white"
@@ -135,15 +135,15 @@ export default function RegisterPage() {
         {/* Form Section */}
         <form onSubmit={handleRegister}>
 
-           {errorMessage && (
-  <div
-    className="flex items-center gap-2 text-[13px] mb-3 justify-center text-red-300"
-    role="alert"
-  >
-    <AlertCircle className="h-4 w-4 shrink-0" />
-    <span>{errorMessage}</span>
-  </div>
-)}
+          {errorMessage && (
+            <div
+              className="flex items-center gap-2 text-[13px] mb-3 justify-center text-red-300"
+              role="alert"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
           <fieldset disabled={isLoading} className="space-y-4 group">
             <FormInput
               label="Full Name"
