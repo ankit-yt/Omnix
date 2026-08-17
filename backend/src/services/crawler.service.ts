@@ -131,7 +131,7 @@ class crawlerService {
       //   args: ['--disable-dev-shm-usage', '--no-sandbox']
       // });
       browser = await chromium.connectOverCDP(
-        `wss://connect.browserbase.com?apiKey=bb_live_w5ArKFMf14sW4aiM14ZEoCKQzL8`
+        `wss://connect.browserbase.com?apiKey=bb_live_wrasfdsdfdZEoCKQzL8`
       );
 
       const context = await browser.newContext({

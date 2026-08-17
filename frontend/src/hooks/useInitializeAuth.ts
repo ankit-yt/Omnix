@@ -18,6 +18,9 @@ export function useInitializeAuth() {
   } = useAuthStore();
 
   const [backendUnreachable, setBackendUnreachable] = useState(false);
+  // NEW: State to track if user tries to access a restricted route
+  const [unauthorizedRole, setUnauthorizedRole] = useState(false);
+
   const retryCountRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,12 +47,14 @@ export function useInitializeAuth() {
       }, delay);
     };
 
-    // Helper to handle forced logouts without flashing the UI
     const handleUnauthorized = () => {
       logout();
       Cookies.remove("refreshToken", { path: "/" });
-      if (!cancelled && window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-        
+      if (
+        !cancelled &&
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/register"
+      ) {
         window.location.replace("/login");
       } else {
         setInitialized();
@@ -59,7 +64,6 @@ export function useInitializeAuth() {
     const initialize = async () => {
       if (isInitialized || user) return;
 
-      // UPDATED: Check for the refreshToken cookie managed by js-cookie
       const hasRefreshToken = !!Cookies.get("refreshToken");
 
       if (!hasRefreshToken) {
@@ -79,10 +83,28 @@ export function useInitializeAuth() {
         setToken(token);
 
         const meRes = await api.get("/auth/me");
-        console.log(meRes)
         if (cancelled) return;
 
-        setAuth(meRes.data.data, token);
+        const fetchedUser = meRes.data.data;
+        const currentPath = window.location.pathname;
+
+        // --- NEW: ROLE RESTRICTION LOGIC ---
+        // If route has "admin" but user is not super_admin
+        if (currentPath.includes("/admin") && fetchedUser.role !== "super_admin") {
+          console.error("Access Denied: Super Admin role required.");
+          setUnauthorizedRole(true);
+
+          // Authenticate them so they aren't completely logged out
+          setAuth(fetchedUser, token);
+          setInitialized();
+
+          // Redirect them away from the admin area to a safe route
+          window.location.replace("/dashboard");
+          return;
+        }
+        // -----------------------------------
+
+        setAuth(fetchedUser, token);
         setBackendUnreachable(false);
         retryCountRef.current = 0;
         setInitialized();
@@ -102,7 +124,6 @@ export function useInitializeAuth() {
         if (status === 401 || status === 403) {
           handleUnauthorized();
         } else {
-          // Unexpected 5xx error — stop blocking the UI, let them see the error state
           setInitialized();
         }
       }
@@ -123,5 +144,6 @@ export function useInitializeAuth() {
     setInitialized,
   ]);
 
-  return { backendUnreachable };
+  // NEW: return unauthorizedRole so your top-level layout can read it if needed
+  return { backendUnreachable, unauthorizedRole };
 }

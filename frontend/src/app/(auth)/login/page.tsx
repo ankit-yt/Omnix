@@ -29,13 +29,17 @@ function LoginContent() {
 
     try {
       const data = await authService.login({ email, password });
-
-      setAuth(data.data.user, data.accessToken);
+const user = data.data.user;
+      setAuth(user, data.accessToken);
 
       const callbackUrl = searchParams.get("callbackUrl");
       console.log("redirecting");
 
+      if (user?.role === "super_admin") {
+      window.location.replace(callbackUrl ?? "/admin/billing");
+    } else {
       window.location.replace(callbackUrl ?? "/dashboard");
+    }
 
     } catch (error: any) {
       console.error("Login failed", error.response);
