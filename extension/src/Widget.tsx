@@ -360,6 +360,8 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
       {panelRendered && (
         <div
           ref={panelRef}
+          onWheel={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
           className="flex flex-col overflow-hidden rounded-[24px] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.05] origin-bottom-right transition-all duration-300 ease-out"
           style={{
             opacity: isOpen ? 1 : 0,
@@ -428,7 +430,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
           </div>
 
           {view === 'history' && (
-            <div ref={historyScrollRef} className="flex-1 overflow-y-auto bg-white flex flex-col pt-20">
+            <div ref={historyScrollRef} className="flex-1 overscroll-contain overflow-y-auto bg-white flex flex-col pt-20">
 
               {/* Header Title Section */}
               <div className="flex items-center justify-between px-5 pb-4 pt-2">
@@ -531,7 +533,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
 
           {view === 'chat' && (
             <>
-              <div ref={messagesScrollRef} className="omnix-scrollbar flex-1 space-y-6 overflow-y-auto bg-white px-5 pb-6 pt-24">
+              <div ref={messagesScrollRef} className="omnix-scrollbar overscroll-contain flex-1 space-y-6 overflow-y-auto bg-white px-5 pb-6 pt-24">
                 {/* top sentinel — triggers loading older messages in this session */}
                 <div ref={olderMessagesSentinelRef} className="h-1 w-full shrink-0" />
 
@@ -613,7 +615,7 @@ export default function Widget({ workspaceId, currentDomain }: { workspaceId: st
                 </form>
                 <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
                   <span>Powered by</span>
-                  <a href="https://omnix.ai" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+                  <a href="https://omnix-sandy.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-semibold text-gray-600 hover:text-gray-900 transition-colors">
                     Omnix
                   </a>
                 </div>
