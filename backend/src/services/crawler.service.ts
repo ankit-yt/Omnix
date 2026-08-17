@@ -126,10 +126,13 @@ class crawlerService {
     let browser: Browser | null = null;
 
     try {
-      browser = await chromium.launch({
-        headless: true,
-        args: ['--disable-dev-shm-usage', '--no-sandbox']
-      });
+      // browser = await chromium.launch({
+      //   headless: true,
+      //   args: ['--disable-dev-shm-usage', '--no-sandbox']
+      // });
+      browser = await chromium.connectOverCDP(
+        `wss://connect.browserbase.com?apiKey=bb_live_w5ArKFMf14sW4aiM14ZEoCKQzL8`
+      );
 
       const context = await browser.newContext({
         userAgent: 'OmnixAI-Bot/1.0',

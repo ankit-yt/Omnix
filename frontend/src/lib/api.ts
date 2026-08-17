@@ -2,7 +2,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://omnix-r4za.onrender.com/api/';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/';
 
 export const api = axios.create({
   baseURL: API_URL,
